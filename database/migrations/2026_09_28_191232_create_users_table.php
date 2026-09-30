@@ -15,7 +15,7 @@ return new class extends Migration
             $table->id('id_usuario');
             $table->string('senha')->nullable();
             $table->enum('cargo',['medico','enfermeiro','secretario','admin']);
-            $table->string('identificador', 11);
+            $table->string('alias', 11);
             $table->string('email', 30);
             $table->boolean('first_login')->default(TRUE);
             $table->timestamps();
