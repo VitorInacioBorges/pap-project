@@ -16,7 +16,7 @@ class ValidaCargos
     public function handle(Request $request, Closure $next, ...$cargos): Response
     {
         if(!in_array($request->user()->cargo, $cargos)){
-            return response()->json(['error: voce não tem permição para realizar essa ação'], 403);
+            return response()->json(['error: voce não tem permissão para realizar essa ação'], 403);
         }
         return $next($request);
     }

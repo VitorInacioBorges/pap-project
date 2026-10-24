@@ -15,6 +15,7 @@ return Application::configure(basePath: dirname(__DIR__))
     ->withMiddleware(function (Middleware $middleware): void {
         $middleware->alias([
         'cargo' => \App\Http\Middleware\ValidaCargos::class,
+        'ativo' => \App\Http\Middleware\ValidaSeUsuarioAtivo::class
          ]);
     })
     ->withExceptions(function (Exceptions $exceptions): void {

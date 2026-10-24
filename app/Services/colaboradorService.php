@@ -3,6 +3,8 @@
 namespace App\Services;
 use App\Models\User;
 use Illuminate\Support\Facades\Hash;
+use Illuminate\Support\Facades\DB;
+
 
 class colaboradorService
 {
@@ -34,9 +36,41 @@ class colaboradorService
             'secretario' => 'SE-' . $string,
             'admin' => 'AD-'.$string,
             };
-
-       
-
-        
     }
+
+    public function listarColaboradorPorId(String $id){
+
+        $User = User::where('id_usuario', $id)->first();
+        return $User;
+
+    }
+
+    public function atualizarColaborador(string $id, array $dados){
+        $user = User::findOrFail($id);
+        $identificador = $this->geraIdentificador($dados['cargo']);
+
+        if(isset($dados['senha'])){
+            $dados['senha'] = Hash::make($dados['senha']);
+        }
+
+        if (isset($dados['cargo']) && $dados['cargo'] !== $user->cargo) {
+        $dados['identificador'] = $this->geraIdentificador($dados['cargo']);
+        }
+
+        $user -> update($dados);
+
+        return $user;
+    }
+
+    public function removerColaborador(string $id): void
+{
+    $user = User::findOrFail($id);
+
+    DB::transaction(function () use ($user) {
+        $user->tokens()->delete();
+        $user->forceFill(['ativo' => false])->save();
+        $user->delete();
+    });
+}
+
 }
