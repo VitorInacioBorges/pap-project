@@ -13,12 +13,12 @@ class AuthController extends Controller
     public function login(Request $request)
     {
         $dados = $request->validate([
-            'identificador' => 'required|string',
+            'alias' => 'required|string',
             'senha' => 'required|string'
         ]);
 
 
-        $user = User::where('identificador', $dados['identificador'])->first();
+        $user = User::where('alias', $dados['alias'])->first();
 
         if(!$user || !Hash::check($dados['senha'], $user->senha)){
             return response()->json(['erro' => 'credenciais invalidads'], 401); 

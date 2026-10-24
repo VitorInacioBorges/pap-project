@@ -26,7 +26,7 @@ class UserController extends Controller
 
         $usuario = $service->cria($dados);
 
-        Mail::to($dados['email'])->send(new senhaMail($usuario["identificador"],$usuario['senhaTemporaria']));
+        Mail::to($dados['email'])->send(new senhaMail($usuario["alias"],$usuario['senhaTemporaria']));
         
 
         return response()->json($request->user(),201);

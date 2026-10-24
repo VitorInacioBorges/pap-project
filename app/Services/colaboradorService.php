@@ -13,14 +13,14 @@ class colaboradorService
         $senhaTemporaria = fake() -> regexify(('[A-Za-z0-9(|#$%&*]{12}'));
         $user = User::create([
             ...$dados, 
-            'identificador' => $identificador, 
+            'alias' => $identificador, 
             'senha'=>Hash::make($senhaTemporaria),
             ]);
 
 
         return [
             ...$dados,
-            'identificador'=>$identificador,
+            'alias'=>$identificador,
             'senhaTemporaria'=>$senhaTemporaria
             ];
 
@@ -54,7 +54,7 @@ class colaboradorService
         }
 
         if (isset($dados['cargo']) && $dados['cargo'] !== $user->cargo) {
-        $dados['identificador'] = $this->geraIdentificador($dados['cargo']);
+        $dados['alias'] = $this->geraIdentificador($dados['cargo']);
         }
 
         $user -> update($dados);

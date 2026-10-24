@@ -10,6 +10,6 @@ class User extends Model
 {
     use HasApiTokens;
     protected $primaryKey = 'id_usuario';
-    protected $fillable = ['identificador','email', 'senha', 'cargo'];
+    protected $fillable = ['alias','email', 'senha', 'cargo'];
     use SoftDeletes;
 }
