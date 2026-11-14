@@ -32,7 +32,7 @@ it('cria um paciente para um usuario secretario e nao retorna a senha', function
 
     $this->assertDatabaseHas('pacientes', [
         'email' => 'paciente@example.com',
-        'cpf' => '12345678901',
+        'cpf' => '123.456.789-01',
         'codigo_paciente' => $codigoPaciente,
     ]);
 });

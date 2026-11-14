@@ -4,8 +4,10 @@ namespace App\Http\Controllers;
 
 use App\Models\Paciente;
 use App\Services\DadosPessoaisService;
+use App\Support\OpcoesPaciente;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
+use Illuminate\Validation\Rule;
 use Symfony\Component\HttpFoundation\Response;
 
 class DadosPessoaisController extends Controller
@@ -20,7 +22,7 @@ class DadosPessoaisController extends Controller
         Paciente $paciente,
         DadosPessoaisService $service
     ): JsonResponse {
-        $validated = $request->validate($this->rules());
+        $validated = $request->validate(self::rules());
         $dadosPessoais = $service->criar($paciente, $validated);
 
         if ($dadosPessoais === null) {
@@ -37,7 +39,7 @@ class DadosPessoaisController extends Controller
         Paciente $paciente,
         DadosPessoaisService $service
     ): JsonResponse {
-        $validated = $request->validate($this->rules(true));
+        $validated = $request->validate(self::rules(true));
 
         return response()->json($service->atualizar($paciente, $validated));
     }
@@ -50,9 +52,9 @@ class DadosPessoaisController extends Controller
     }
 
     /**
-     * @return array<string, array<int, string>>
+     * @return array<string, array<int, mixed>>
      */
-    private function rules(bool $sometimes = false): array
+    public static function rules(bool $sometimes = false): array
     {
         $required = $sometimes ? 'sometimes' : 'required';
 
@@ -65,8 +67,8 @@ class DadosPessoaisController extends Controller
             'PA' => ['sometimes', 'nullable', 'string', 'max:20'],
             'CA' => ['sometimes', 'nullable', 'numeric', 'min:0'],
             'profissao' => ['sometimes', 'nullable', 'string', 'max:255'],
-            'escolaridade' => ['sometimes', 'nullable', 'string', 'max:255'],
-            'estado_civil' => ['sometimes', 'nullable', 'string', 'max:255'],
+            'escolaridade' => ['sometimes', 'nullable', Rule::in(OpcoesPaciente::ESCOLARIDADES)],
+            'estado_civil' => ['sometimes', 'nullable', Rule::in(OpcoesPaciente::ESTADOS_CIVIS)],
             'telefone' => ['sometimes', 'nullable', 'string', 'max:30'],
             'endereco' => ['sometimes', 'nullable', 'string'],
         ];

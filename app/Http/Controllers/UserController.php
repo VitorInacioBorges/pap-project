@@ -22,6 +22,7 @@ class UserController extends Controller
         $dados = $request->validate([
             'email' => 'required|email',
             'cargo' => 'required|string',
+            'nome' => ['sometimes', 'nullable', 'string', 'max:255'],
         ]);
 
         $usuario = $service->cria($dados);

@@ -24,6 +24,10 @@ class AuthService
             return null;
         }
 
+        if ($usuario instanceof User && ! $usuario->ativo) {
+            return null;
+        }
+
         return [
             'token' => $usuario->createToken('token')->plainTextToken,
             'first_login' => (bool) $usuario->first_login,
