@@ -1,106 +1,89 @@
 <!DOCTYPE html>
-<html lang="{{ str_replace('_', '-', app()->getLocale()) }}">
+<html lang="pt-BR">
 <head>
     <meta charset="utf-8">
     <meta name="viewport" content="width=device-width, initial-scale=1">
+    <meta name="theme-color" content="#009A94">
+    <meta name="description" content="Acesso ao sistema do Ambulatório de Saúde UEPG — Prevenção e Educação na Atenção à Saúde da Mulher.">
     <title>Login · Projeto PAP</title>
-    @vite(['resources/css/app.css', 'resources/js/app.js'])
+    <link rel="icon" href="{{ asset('images/pap-logo.svg') }}" type="image/svg+xml">
+    @fonts
+    @vite(['resources/css/app.css', 'resources/js/pages/login.js'])
 </head>
-<body class="bg-[#E6F4F4] min-h-screen flex items-center justify-center p-4 md:py-16">
-
-    <div class="w-full max-w-[680px] bg-white rounded-[24px] p-6 md:p-12 shadow-sm flex flex-col items-center">
-        
-        {{-- Logos ProjetoPAP e UEPG --}}
-        <div class="flex items-center justify-center gap-6 mb-6">
-            <img src="{{ asset('images/pap-fullogo.svg') }}" alt="Projeto PAP" class="h-10 w-auto">
-
-            <div class="h-8 w-[2px] bg-gray-200"></div>
-
-            <img src="{{ asset('images/uepg.svg') }}" alt="UEPG" class="h-10 w-auto">
+<body data-tema="rosa" class="flex min-h-screen items-center justify-center bg-(--fundo-tema) p-4 font-sans text-tinta antialiased transition-colors md:p-10">
+    <main class="w-full max-w-[680px] rounded-3xl bg-white px-5 py-8 shadow-sm sm:px-10 md:py-12">
+        <div class="flex items-center justify-center gap-8">
+            <img src="{{ asset('images/pap-fullogo.svg') }}" alt="Projeto PAP" class="h-14 w-auto md:h-[72px]">
+            <img src="{{ asset('images/uepg.svg') }}" alt="UEPG" class="h-11 w-auto md:h-[52px]">
         </div>
 
-        {{-- Título e Subtítulo --}}
-        <h1 class="text-2xl md:text-3xl font-bold text-[#1B1B18] text-center mb-2">
-            Faça seu Login
-        </h1>
-        <p class="text-sm md:text-base text-gray-600 text-center mb-8 max-w-md">
+        <h1 class="mt-8 text-center font-heading text-2xl font-bold md:text-3xl">Faça seu Login</h1>
+        <p class="mx-auto mt-2 max-w-md text-center text-base leading-snug">
             Ambulatório de Saúde UEPG — Prevenção e Educação na Atenção à Saúde da Mulher
         </p>
 
-        {{-- Container com Borda e Abas --}}
-        <div class="w-full border-2 border-[#009A94] rounded-[16px] overflow-hidden bg-white">
-            
-            {{-- Abas de Seleção de Perfil --}}
-            <div class="grid grid-cols-2 text-center text-sm md:text-base font-bold cursor-pointer" id="tabs-header">
-                <button type="button" id="tab-paciente-btn" onclick="switchTab('paciente')"
-                    class="py-3.5 px-2 flex items-center justify-center gap-2 bg-[#E6F4F4] text-[#009A94] border-r border-[#009A94] transition">
-                    <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z" />
+        <div class="mx-auto mt-8 w-full max-w-[500px]">
+            <div role="tablist" aria-label="Tipo de acesso" class="grid grid-cols-2 overflow-hidden rounded-t-xl">
+                <button type="button" role="tab" id="aba-paciente" data-aba="paciente"
+                        aria-selected="true" aria-controls="painel-login"
+                        class="flex min-h-12 items-center justify-center gap-2 px-2 py-2 font-heading text-base font-bold leading-tight transition focus:outline-none focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-tinta aria-selected:bg-(--destaque) aria-selected:text-white aria-[selected=false]:bg-(--destaque-claro) aria-[selected=false]:text-(--destaque-escuro) aria-[selected=false]:hover:brightness-95 sm:text-lg">
+                    <svg class="h-5 w-5 shrink-0" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" aria-hidden="true">
+                        <circle cx="12" cy="8" r="4" /><path d="M4 21a8 8 0 0 1 16 0" stroke-linecap="round" />
                     </svg>
                     Sou Paciente
                 </button>
-
-                <button type="button" id="tab-projeto-btn" onclick="switchTab('projeto')"
-                    class="py-3.5 px-2 flex items-center justify-center gap-2 bg-[#009A94] text-white transition">
-                    <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4.318 6.318a4.5 4.5 0 000 6.364L12 20.364l7.682-7.682a4.5 4.5 0 00-6.364-6.364L12 7.636l-1.318-1.318a4.5 4.5 0 00-6.364 0z" />
-                    </svg>
+                <button type="button" role="tab" id="aba-colaborador" data-aba="colaborador"
+                        aria-selected="false" aria-controls="painel-login" tabindex="-1"
+                        class="flex min-h-12 items-center justify-center gap-2 px-2 py-2 font-heading text-base font-bold leading-tight transition focus:outline-none focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-tinta aria-selected:bg-(--destaque) aria-selected:text-white aria-[selected=false]:bg-(--destaque-claro) aria-[selected=false]:text-(--destaque-escuro) aria-[selected=false]:hover:brightness-95 sm:text-lg">
+                    <span class="h-5 w-6 shrink-0 bg-current" style="mask: url('{{ asset('images/pap-logo.svg') }}') center / contain no-repeat; -webkit-mask: url('{{ asset('images/pap-logo.svg') }}') center / contain no-repeat;" aria-hidden="true"></span>
                     Sou do ProjetoPAP
                 </button>
             </div>
 
-            {{-- Formulário --}}
-            <form method="POST" action="{{ route('login') }}" class="p-6 md:p-8 space-y-5">
-                @csrf
-                <input type="hidden" name="user_type" id="user_type" value="projeto">
-
+            <form id="painel-login" role="tabpanel" aria-labelledby="aba-paciente" novalidate
+                  class="space-y-4 rounded-b-xl border-2 border-(--destaque) px-5 py-6 sm:px-6">
                 <div>
-                    <label id="login-label" for="login" class="block text-sm font-bold text-[#1B1B18] mb-1">
-                        E-mail ou CPF<span class="text-red-600">*</span>
+                    <label for="campo-login" class="block font-heading text-sm font-bold">
+                        <span id="rotulo-login">E-mail</span><span class="text-perigo" aria-hidden="true">*</span>
                     </label>
-                    <input type="text" id="login" name="login" required placeholder="000.000.000-00"
-                        class="w-full h-12 px-4 rounded-xl border border-gray-300 bg-[#F2F2F2] text-[#1B1B18] placeholder-gray-400 text-base outline-none focus:border-[#009A94] focus:ring-2 focus:ring-[#009A94]">
+                    <input id="campo-login" name="login" type="email" required autocomplete="username"
+                           placeholder="seu-email@exemplo.com" aria-describedby="erro-login"
+                           class="mt-1 h-12 w-full rounded-xl border-2 border-black/10 bg-campo px-3 text-base transition placeholder:text-black/40 focus:border-(--destaque) focus:bg-white focus:outline-none aria-invalid:border-perigo">
+                    <p id="erro-login" data-erro="login" class="mt-1 text-sm text-perigo" hidden></p>
                 </div>
 
                 <div>
-                    <label for="password" class="block text-sm font-bold text-[#1B1B18] mb-1">
-                        Senha<span class="text-red-600">*</span>
+                    <label for="campo-senha" class="block font-heading text-sm font-bold">
+                        Senha<span class="text-perigo" aria-hidden="true">*</span>
                     </label>
-                    <input type="password" id="password" name="password" required placeholder="********"
-                        class="w-full h-12 px-4 rounded-xl border border-gray-300 bg-[#F2F2F2] text-[#1B1B18] placeholder-gray-400 text-base outline-none focus:border-[#009A94] focus:ring-2 focus:ring-[#009A94]">
+                    <input id="campo-senha" name="senha" type="password" required autocomplete="current-password"
+                           placeholder="••••••••" aria-describedby="erro-senha"
+                           class="mt-1 h-12 w-full rounded-xl border-2 border-black/10 bg-campo px-3 text-base transition placeholder:text-black/40 focus:border-(--destaque) focus:bg-white focus:outline-none aria-invalid:border-perigo">
+                    <p id="erro-senha" data-erro="senha" class="mt-1 text-sm text-perigo" hidden></p>
                 </div>
 
-                <button type="submit"
-                    class="w-full h-12 bg-[#009A94] text-white font-bold text-lg rounded-xl transition hover:brightness-95 focus:outline-none focus:ring-2 focus:ring-[#009A94] mt-2">
+                <p id="mensagem-login" role="alert" class="rounded-lg bg-perigo/10 px-3 py-2 text-sm font-semibold text-perigo" hidden></p>
+
+                <button type="submit" id="botao-entrar"
+                        class="h-12 w-full rounded-xl bg-(--destaque) font-heading text-lg font-bold text-white transition hover:bg-(--destaque-escuro) active:scale-[0.99] disabled:cursor-wait disabled:opacity-70 focus:outline-none focus-visible:ring-2 focus-visible:ring-tinta focus-visible:ring-offset-2">
                     Entrar
                 </button>
 
+                {{-- DECISAO: link "Não sei qual é meu login" — escolhido: texto de ajuda na própria tela; alternativas: tela de recuperação por e-mail --}}
+                <div id="ajuda-paciente" class="text-center">
+                    <button type="button" id="botao-ajuda" aria-expanded="false" aria-controls="texto-ajuda"
+                            class="inline-flex min-h-11 items-center gap-1.5 rounded-lg px-2 text-sm font-semibold text-black/60 transition hover:text-tinta focus:outline-none focus-visible:ring-2 focus-visible:ring-(--destaque)">
+                        <svg class="h-4 w-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true">
+                            <circle cx="12" cy="12" r="10" /><path d="M9.5 9a2.5 2.5 0 0 1 4.9.8c0 1.7-2.4 2.2-2.4 3.7M12 17h.01" stroke-linecap="round" />
+                        </svg>
+                        Não sei qual é meu login
+                    </button>
+                    <p id="texto-ajuda" class="mx-auto mt-2 max-w-sm text-sm leading-snug" hidden>
+                        Seu login é o e-mail informado no seu cadastro. Em caso de dúvida, procure a recepção do ambulatório.
+                    </p>
+                </div>
             </form>
         </div>
-    </div>
-
-    <script>
-        function switchTab(type) {
-            const btnPaciente = document.getElementById('tab-paciente-btn');
-            const btnProjeto = document.getElementById('tab-projeto-btn');
-            const userTypeInput = document.getElementById('user_type');
-            const loginLabel = document.getElementById('login-label');
-            const loginInput = document.getElementById('login');
-
-            userTypeInput.value = type;
-
-            if (type === 'paciente') {
-                btnPaciente.className = "py-3.5 px-2 flex items-center justify-center gap-2 bg-[#009A94] text-white transition border-r border-[#009A94]";
-                btnProjeto.className = "py-3.5 px-2 flex items-center justify-center gap-2 bg-[#E6F4F4] text-[#009A94] transition";
-                loginLabel.innerHTML = 'CPF<span class="text-red-600">*</span>';
-                loginInput.placeholder = '000.000.000-00';
-            } else {
-                btnProjeto.className = "py-3.5 px-2 flex items-center justify-center gap-2 bg-[#009A94] text-white transition";
-                btnPaciente.className = "py-3.5 px-2 flex items-center justify-center gap-2 bg-[#E6F4F4] text-[#009A94] border-r border-[#009A94] transition";
-                loginLabel.innerHTML = 'CPF ou E-mail<span class="text-red-600">*</span>';
-                loginInput.placeholder = '000.000.000-00 ou email@exemplo.com';
-            }
-        }
-    </script>
+    </main>
 </body>
 </html>

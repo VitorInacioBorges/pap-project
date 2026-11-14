@@ -17,7 +17,7 @@
     --color-tinta: #1B1B18;
     --color-campo: #F2F2F2;
     --color-rosa: #FF2BA0;
-    --color-rosa-escuro: #E0148A;
+    --color-rosa-escuro: #C8157D;
     --color-rosa-fundo: #F7E1EE;
     --color-rosa-claro: #FDE3F1;
     --color-ativo: #0F9D58;
@@ -32,4 +32,18 @@
     dialog::backdrop {
         background: rgb(0 0 0 / 0.45);
     }
+}
+
+[data-tema='rosa'] {
+    --destaque: var(--color-rosa);
+    --destaque-escuro: var(--color-rosa-escuro);
+    --destaque-claro: var(--color-rosa-claro);
+    --fundo-tema: var(--color-rosa-fundo);
+}
+
+[data-tema='pap'] {
+    --destaque: var(--color-pap);
+    --destaque-escuro: var(--color-pap-escuro);
+    --destaque-claro: var(--color-pap-fundo);
+    --fundo-tema: var(--color-pap-fundo);
 }

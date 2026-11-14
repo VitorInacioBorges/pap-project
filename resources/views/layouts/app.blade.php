@@ -8,6 +8,8 @@
     <title>@yield('title', 'Projeto PAP')</title>
     <link rel="icon" href="{{ asset('images/pap-logo.svg') }}" type="image/svg+xml">
 
+    @fonts
+
     @vite(['resources/css/app.css', 'resources/js/app.js'])
     @stack('scripts')
 </head>
