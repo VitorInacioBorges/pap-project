@@ -18,6 +18,7 @@ return new class extends Migration
             $table->string('alias', 11);
             $table->string('email', 30);
             $table->boolean('first_login')->default(TRUE);
+            $table->boolean('ativo')->default(TRUE);
             $table->timestamps();
             $table->softDeletes();
         });
