@@ -5,6 +5,7 @@ namespace App\Http\Controllers;
 use App\Models\Paciente;
 use App\Services\PacienteService;
 use App\Support\OpcoesPaciente;
+use Closure;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Arr;
@@ -42,7 +43,7 @@ class PacienteController extends Controller
         $validated = $request->validate([
             'email' => ['required', 'email', 'max:255', $this->unico('email')],
             'senha' => ['required', 'string', 'min:8', 'max:255'],
-            'cpf' => ['required', 'string', 'regex:'.OpcoesPaciente::FORMATO_CPF, $this->unico('cpf')],
+            'cpf' => ['required', 'string', 'regex:'.OpcoesPaciente::FORMATO_CPF, $this->cpfLivre()],
             ...$this->regrasDadosPessoais($request, false),
         ]);
 
@@ -69,7 +70,7 @@ class PacienteController extends Controller
                 'required',
                 'string',
                 'regex:'.OpcoesPaciente::FORMATO_CPF,
-                $this->unico('cpf')->ignore($paciente->getKey(), $paciente->getKeyName()),
+                $this->cpfLivre($paciente),
             ],
             ...$this->regrasDadosPessoais($request, $paciente->dadosPessoais()->exists()),
         ]);
@@ -123,6 +124,26 @@ class PacienteController extends Controller
         }
 
         return $regras;
+    }
+
+    /**
+     * Compara só os dígitos, porque cadastros antigos podem ter o CPF sem máscara.
+     */
+    private function cpfLivre(?Paciente $ignorar = null): Closure
+    {
+        return function (string $atributo, mixed $valor, Closure $falhar) use ($ignorar) {
+            $digitos = preg_replace('/\D/', '', (string) $valor);
+
+            $emUso = Paciente::withTrashed()
+                ->where('hard_deleted', false)
+                ->whereRaw("replace(replace(cpf, '.', ''), '-', '') = ?", [$digitos])
+                ->when($ignorar, fn ($query) => $query->whereKeyNot($ignorar->getKey()))
+                ->exists();
+
+            if ($emUso) {
+                $falhar('Este CPF já está em uso.');
+            }
+        };
     }
 
     private function unico(string $coluna): Unique

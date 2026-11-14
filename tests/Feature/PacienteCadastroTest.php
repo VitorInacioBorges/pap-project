@@ -99,3 +99,11 @@ it('edita a paciente sem trocar a senha quando ela nao vem', function () {
 
     expect(Hash::check('senha-segura-123', $paciente->refresh()->senha))->toBeTrue();
 });
+
+it('recusa cpf ja gravado sem mascara por cadastro antigo', function () {
+    novaPaciente('12345678901', 'antiga@example.com');
+
+    $this->postJson('/api/pacientes', dadosNovaPaciente(['cpf' => '123.456.789-01']))
+        ->assertUnprocessable()
+        ->assertJsonValidationErrors(['cpf']);
+});
