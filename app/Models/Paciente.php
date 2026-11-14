@@ -22,7 +22,14 @@ class Paciente extends Authenticatable
     protected $casts = [
         'senha' => 'hashed',
         'first_login' => 'boolean',
+        'hard_deleted' => 'boolean',
     ];
+
+    public function resolveRouteBindingQuery($query, $value, $field = null)
+    {
+        return parent::resolveRouteBindingQuery($query, $value, $field)
+            ->where($this->qualifyColumn('hard_deleted'), false);
+    }
 
     public function getAuthPassword(): string
     {

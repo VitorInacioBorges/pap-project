@@ -7,6 +7,7 @@ use App\Services\PacienteService;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 use Illuminate\Validation\Rule;
+use Illuminate\Validation\Rules\Unique;
 use Symfony\Component\HttpFoundation\Response;
 
 class PacienteController extends Controller
@@ -24,9 +25,9 @@ class PacienteController extends Controller
     public function store(Request $request, PacienteService $service): JsonResponse
     {
         $validated = $request->validate([
-            'email' => ['required', 'email', 'max:255', 'unique:pacientes,email'],
+            'email' => ['required', 'email', 'max:255', $this->unico('email')],
             'senha' => ['required', 'string', 'min:8', 'max:255'],
-            'cpf' => ['required', 'string', 'max:14', 'unique:pacientes,cpf'],
+            'cpf' => ['required', 'string', 'max:14', $this->unico('cpf')],
         ]);
 
         $paciente = $service->criar($validated);
@@ -42,7 +43,7 @@ class PacienteController extends Controller
                 'required',
                 'email',
                 'max:255',
-                Rule::unique('pacientes', 'email')->ignore($paciente->getKey(), $paciente->getKeyName()),
+                $this->unico('email')->ignore($paciente->getKey(), $paciente->getKeyName()),
             ],
             'senha' => ['sometimes', 'required', 'string', 'min:8', 'max:255'],
             'cpf' => [
@@ -50,7 +51,7 @@ class PacienteController extends Controller
                 'required',
                 'string',
                 'max:14',
-                Rule::unique('pacientes', 'cpf')->ignore($paciente->getKey(), $paciente->getKeyName()),
+                $this->unico('cpf')->ignore($paciente->getKey(), $paciente->getKeyName()),
             ],
         ]);
 
@@ -62,5 +63,23 @@ class PacienteController extends Controller
         $service->excluir($paciente);
 
         return response()->noContent();
+    }
+
+    public function reativar(Paciente $paciente, PacienteService $service): JsonResponse
+    {
+        return response()->json($service->reativar($paciente));
+    }
+
+    public function excluir(Paciente $paciente, PacienteService $service): Response
+    {
+        $service->excluirDefinitivo($paciente);
+
+        return response()->noContent();
+    }
+
+    private function unico(string $coluna): Unique
+    {
+        return Rule::unique('pacientes', $coluna)
+            ->where(fn ($query) => $query->where('hard_deleted', false));
     }
 }

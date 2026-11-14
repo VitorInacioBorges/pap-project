@@ -4,6 +4,7 @@ namespace App\Services;
 
 use App\Models\Paciente;
 use Illuminate\Contracts\Pagination\LengthAwarePaginator;
+use Illuminate\Support\Facades\DB;
 
 class PacienteService
 {
@@ -49,6 +50,28 @@ class PacienteService
 
     public function excluir(Paciente $paciente): void
     {
-        $paciente->delete();
+        DB::transaction(function () use ($paciente) {
+            $paciente->tokens()->delete();
+            $paciente->delete();
+        });
+    }
+
+    public function reativar(Paciente $paciente): Paciente
+    {
+        $paciente->restore();
+
+        return $paciente->load('dadosPessoais');
+    }
+
+    public function excluirDefinitivo(Paciente $paciente): void
+    {
+        DB::transaction(function () use ($paciente) {
+            $paciente->tokens()->delete();
+            $paciente->forceFill(['hard_deleted' => true])->save();
+
+            if (! $paciente->trashed()) {
+                $paciente->delete();
+            }
+        });
     }
 }
