@@ -60,7 +60,9 @@
            class="fixed inset-y-0 left-0 z-50 flex w-full -translate-x-full flex-col bg-pap-menu transition-transform duration-200 sm:w-[360px]">
         <div class="flex h-28 shrink-0 items-center justify-between gap-4 bg-pap px-6">
             <div class="flex min-w-0 items-center gap-4">
-                <img src="{{ asset('images/user-icon.svg') }}" alt="" class="h-14 w-14 shrink-0">
+                <span class="relative h-14 w-14 shrink-0 overflow-hidden rounded-full bg-pap-fundo" aria-hidden="true">
+                    <span class="absolute inset-x-0 bottom-0 mx-auto h-[85%] w-[85%] bg-pap-menu" style="mask: url('{{ asset('images/user-icon.svg') }}') center bottom / contain no-repeat; -webkit-mask: url('{{ asset('images/user-icon.svg') }}') center bottom / contain no-repeat;"></span>
+                </span>
                 <div class="min-w-0 text-white">
                     <p class="truncate font-heading text-xl font-bold leading-tight" data-usuario-nome></p>
                     <p class="truncate text-lg leading-tight" data-usuario-cargo></p>

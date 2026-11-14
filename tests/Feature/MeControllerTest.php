@@ -118,3 +118,10 @@ it('recusa login de colaborador inativo', function () {
 it('exige autenticacao em /me', function () {
     $this->getJson('/api/me')->assertUnauthorized();
 });
+
+it('responde erros de validacao em portugues', function () {
+    Sanctum::actingAs(criarSecretario()->forceFill(['first_login' => false]));
+
+    $this->patchJson('/api/me', ['nome' => ''])
+        ->assertJsonPath('errors.nome.0', 'O campo nome é obrigatório.');
+});
