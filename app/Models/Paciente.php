@@ -19,6 +19,13 @@ class Paciente extends Authenticatable
 
     protected $hidden = ['senha'];
 
+    protected $appends = ['ativo'];
+
+    public function getAtivoAttribute(): bool
+    {
+        return $this->deleted_at === null;
+    }
+
     protected $casts = [
         'senha' => 'hashed',
         'first_login' => 'boolean',

@@ -12,9 +12,20 @@ use Symfony\Component\HttpFoundation\Response;
 
 class PacienteController extends Controller
 {
-    public function index(PacienteService $service): JsonResponse
+    public function index(Request $request, PacienteService $service): JsonResponse
     {
-        return response()->json($service->listar());
+        $filtros = $request->validate([
+            'busca' => ['nullable', 'string', 'max:100'],
+            'ordem' => ['nullable', 'in:recentes,antigos,alfabetica'],
+            'status' => ['nullable', 'array'],
+            'status.*' => ['in:ativos,inativos'],
+        ]);
+
+        return response()->json($service->listar(
+            $filtros['busca'] ?? null,
+            $filtros['ordem'] ?? 'recentes',
+            $filtros['status'] ?? ['ativos'],
+        ));
     }
 
     public function show(Paciente $paciente, PacienteService $service): JsonResponse

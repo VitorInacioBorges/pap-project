@@ -1,34 +1,9 @@
 <?php
 
 use App\Models\Paciente;
-use App\Models\User;
 use Illuminate\Foundation\Testing\RefreshDatabase;
-use Laravel\Sanctum\Sanctum;
 
 uses(RefreshDatabase::class);
-
-function entrarComo(string $cargo): User
-{
-    $usuario = User::query()->create([
-        'alias' => strtoupper(substr($cargo, 0, 2)).'-1234567',
-        'email' => "{$cargo}@example.com",
-        'cargo' => $cargo,
-        'ativo' => true,
-    ])->refresh()->forceFill(['first_login' => false]);
-
-    Sanctum::actingAs($usuario);
-
-    return $usuario;
-}
-
-function novaPaciente(string $cpf = '123.456.789-01', string $email = 'paciente@example.com'): Paciente
-{
-    return Paciente::query()->create([
-        'email' => $email,
-        'senha' => 'senha-segura-123',
-        'cpf' => $cpf,
-    ])->refresh();
-}
 
 it('permite que admin gerencie pacientes', function () {
     entrarComo('admin');

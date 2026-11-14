@@ -1,6 +1,9 @@
 <?php
 
+use App\Models\Paciente;
+use App\Models\User;
 use Illuminate\Foundation\Testing\RefreshDatabase;
+use Laravel\Sanctum\Sanctum;
 use Tests\TestCase;
 
 /*
@@ -44,7 +47,35 @@ expect()->extend('toBeOne', function () {
 |
 */
 
-function something()
+function entrarComo(string $cargo): User
 {
-    // ..
+    $usuario = User::query()->create([
+        'alias' => strtoupper(substr($cargo, 0, 2)).'-1234567',
+        'email' => "{$cargo}@example.com",
+        'cargo' => $cargo,
+        'ativo' => true,
+    ])->refresh()->forceFill(['first_login' => false]);
+
+    Sanctum::actingAs($usuario);
+
+    return $usuario;
+}
+
+function novaPaciente(string $cpf = '123.456.789-01', string $email = 'paciente@example.com', ?string $nome = null, ?string $criadoEm = null): Paciente
+{
+    $paciente = Paciente::query()->create([
+        'email' => $email,
+        'senha' => 'senha-segura-123',
+        'cpf' => $cpf,
+    ]);
+
+    if ($criadoEm !== null) {
+        $paciente->forceFill(['created_at' => $criadoEm])->save();
+    }
+
+    if ($nome !== null) {
+        $paciente->dadosPessoais()->create(['nome' => $nome, 'data_nascimento' => '1990-01-01']);
+    }
+
+    return $paciente->refresh();
 }
