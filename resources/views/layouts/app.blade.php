@@ -116,6 +116,15 @@
             Carregando…
         </div>
 
+        <div id="erro-carregar" role="alert" class="rounded-2xl border-2 border-perigo bg-white p-6" hidden>
+            <p class="font-heading text-xl font-bold">Não foi possível carregar seus dados.</p>
+            <p class="mt-2" data-erro-texto></p>
+            <button type="button"
+                    class="mt-4 min-h-11 rounded-xl border-2 border-pap px-4 font-heading font-bold text-pap transition hover:bg-pap-fundo active:scale-[0.98]">
+                Tentar de novo
+            </button>
+        </div>
+
         <div id="sem-permissao" class="rounded-2xl border-2 border-perigo bg-white p-6" hidden>
             <p class="font-heading text-xl font-bold">Você não tem permissão para esta tela.</p>
             <a href="{{ route('inicio') }}"

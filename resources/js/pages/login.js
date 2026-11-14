@@ -132,6 +132,10 @@ formulario.addEventListener('submit', (evento) => {
     });
 });
 
+if (new URLSearchParams(window.location.search).get('motivo') === 'inativo') {
+    mostrarMensagem('Seu acesso está desativado. Procure a administração do ambulatório.');
+}
+
 if (getToken()) {
     carregarUsuario()
         .then((usuario) => window.location.replace(paginaInicial(usuario)))

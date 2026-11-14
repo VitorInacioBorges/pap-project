@@ -166,7 +166,24 @@ export async function protegerPagina() {
         return nunca();
     }
 
-    const usuario = await carregarUsuario();
+    let usuario;
+    try {
+        usuario = await carregarUsuario();
+    } catch (erro) {
+        if (erro instanceof ErroApi && erro.status === 403) {
+            limparSessao();
+            window.location.replace('/login?motivo=inativo');
+            return nunca();
+        }
+        document.getElementById('carregando')?.setAttribute('hidden', '');
+        const aviso = document.getElementById('erro-carregar');
+        if (aviso) {
+            aviso.querySelector('[data-erro-texto]').textContent = erro.message;
+            aviso.hidden = false;
+            aviso.querySelector('button')?.addEventListener('click', () => window.location.reload(), { once: true });
+        }
+        return null;
+    }
 
     if (usuario.tipo !== tipo) {
         window.location.replace(paginaInicial(usuario));

@@ -280,6 +280,8 @@ if (usuario) {
         campoSenha.required = !paciente;
         campoSenha.placeholder = paciente ? 'Deixe em branco para manter' : '••••••••';
 
+        formulario.querySelectorAll('option[data-temporaria]').forEach((opcao) => opcao.remove());
+
         if (paciente) {
             const dados = paciente.dados_pessoais ?? {};
             for (const campo of camposDoFormulario()) {
@@ -289,6 +291,12 @@ if (usuario) {
                 if (campo.type === 'date' && valor) valor = String(valor).slice(0, 10);
                 if (['dados_pessoais.peso', 'dados_pessoais.altura', 'dados_pessoais.CA'].includes(campo.name) && valor != null) {
                     valor = String(Number(valor)).replace('.', ',');
+                }
+                if (campo.tagName === 'SELECT' && valor && ![...campo.options].some((opcao) => opcao.value === valor)) {
+                    // Valor de cadastro antigo fora da lista: mantido para não ser apagado sem aviso.
+                    const antiga = new Option(`${valor} (valor antigo)`, valor);
+                    antiga.dataset.temporaria = '';
+                    campo.add(antiga);
                 }
                 campo.value = valor ?? '';
             }

@@ -26,6 +26,15 @@
             Carregando…
         </div>
 
+        <div id="erro-carregar" role="alert" class="mt-8 rounded-2xl border-2 border-perigo bg-white p-6 text-center" hidden>
+            <p class="font-heading text-xl font-bold">Não foi possível carregar seus dados.</p>
+            <p class="mt-2" data-erro-texto></p>
+            <button type="button"
+                    class="mt-4 min-h-11 rounded-xl border-2 border-rosa px-4 font-heading font-bold text-rosa-escuro transition hover:bg-rosa-claro active:scale-[0.98]">
+                Tentar de novo
+            </button>
+        </div>
+
         <div id="app-conteudo" class="mt-8 text-center" hidden>
             <h1 class="font-heading text-2xl font-bold md:text-3xl">
                 <span id="saudacao-com-nome" hidden>Olá, <span data-usuario-nome></span>!</span>
