@@ -2,6 +2,7 @@
 
 use App\Http\Controllers\AuthController;
 use App\Http\Controllers\DadosPessoaisController;
+use App\Http\Controllers\MeController;
 use App\Http\Controllers\PacienteController;
 use App\Http\Controllers\UserController;
 use Illuminate\Support\Facades\Route;
@@ -13,7 +14,12 @@ Route::middleware('clear_sanctum')->group(function () {
     Route::post('/pacientes/alterar-senha', [AuthController::class, 'alterarSenha'])
         ->middleware(['auth:sanctum', 'ativo']);
 
+    Route::get('/me', [MeController::class, 'show'])->middleware(['auth:sanctum', 'ativo']);
+    Route::post('/logout', [MeController::class, 'logout'])->middleware('auth:sanctum');
+
     Route::middleware(['auth:sanctum', 'ativo', 'primeiro_login'])->group(function () {
+        Route::patch('/me', [MeController::class, 'update']);
+
         Route::get('/users', [UserController::class, 'index'])->middleware('cargo:admin');
         Route::post('/users', [UserController::class, 'criaColaborador'])->middleware('cargo:admin');
         Route::get('/users/{id}', [UserController::class, 'show']);
