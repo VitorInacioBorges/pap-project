@@ -3,6 +3,7 @@
 namespace App\Models;
 
 use Illuminate\Database\Eloquent\Model;
+use Illuminate\Database\Eloquent\Relations\BelongsTo;
 
 class DadosPessoais extends Model
 {
@@ -26,7 +27,7 @@ class DadosPessoais extends Model
         'endereco',
     ];
 
-    public function DadosPessoais():belongsTo
+    public function paciente(): BelongsTo
     {
         return $this->belongsTo(Paciente::class, 'id_paciente');
     }

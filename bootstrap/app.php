@@ -1,5 +1,9 @@
 <?php
 
+use App\Http\Middleware\ExigeTrocaSenhaPrimeiroAcesso;
+use App\Http\Middleware\ResetSanctumGuard;
+use App\Http\Middleware\ValidaCargos;
+use App\Http\Middleware\ValidaSeUsuarioAtivo;
 use Illuminate\Foundation\Application;
 use Illuminate\Foundation\Configuration\Exceptions;
 use Illuminate\Foundation\Configuration\Middleware;
@@ -14,14 +18,15 @@ return Application::configure(basePath: dirname(__DIR__))
     )
     ->withMiddleware(function (Middleware $middleware): void {
         $middleware->alias([
-        'cargo' => \App\Http\Middleware\ValidaCargos::class,
-        'ativo' => \App\Http\Middleware\ValidaSeUsuarioAtivo::class
-         ]);
+            'cargo' => ValidaCargos::class,
+            'ativo' => ValidaSeUsuarioAtivo::class,
+            'clear_sanctum' => ResetSanctumGuard::class,
+            'primeiro_login' => ExigeTrocaSenhaPrimeiroAcesso::class,
+        ]);
     })
     ->withExceptions(function (Exceptions $exceptions): void {
         $exceptions->shouldRenderJsonWhen(
             fn (Request $request) => $request->is('api/*') || $request->expectsJson(),
         );
 
-    
     })->create();

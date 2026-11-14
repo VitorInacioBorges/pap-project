@@ -15,9 +15,16 @@ class ValidaCargos
      */
     public function handle(Request $request, Closure $next, ...$cargos): Response
     {
-        if(!in_array($request->user()->cargo, $cargos)){
+        $usuario = $request->user();
+
+        if (! $usuario) {
+            return response()->json(['message' => 'Unauthenticated.'], 401);
+        }
+
+        if (! in_array($usuario->cargo, $cargos, true)) {
             return response()->json(['error: voce não tem permissão para realizar essa ação'], 403);
         }
+
         return $next($request);
     }
 }
