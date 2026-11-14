@@ -80,6 +80,13 @@ class PacienteController extends Controller
         return response()->json($service->atualizar($paciente, $validated, $dadosPessoais));
     }
 
+    public function reenviarSenha(Paciente $paciente, PacienteService $service): JsonResponse
+    {
+        $service->reenviarSenha($paciente);
+
+        return response()->json(['message' => 'Nova senha temporária colocada na fila de envio para '.$paciente->email.'. A troca será obrigatória no próximo acesso.']);
+    }
+
     public function destroy(Paciente $paciente, PacienteService $service): Response
     {
         $service->excluir($paciente);

@@ -3,6 +3,7 @@
 namespace App\Http\Controllers;
 
 use App\Models\Paciente;
+use App\Support\CamposAnamnese;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 
@@ -22,6 +23,7 @@ class FichaController extends Controller
         $dados = $request->validate([
             'data_atendimento' => ['required', 'date_format:Y-m-d\TH:i:s.v\Z'],
             'observacoes' => ['nullable', 'string', 'max:10000'],
+            ...CamposAnamnese::regras(),
         ]);
 
         $ficha = $paciente->fichas()->create([

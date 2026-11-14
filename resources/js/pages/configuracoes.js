@@ -27,6 +27,9 @@ if (usuario) {
     document.getElementById('campo-cargo').value = rotuloCargo(usuario.cargo);
     document.getElementById('campo-identificacao').value = usuario.alias ?? '';
     document.getElementById('aviso-primeiro-acesso').hidden = !primeiroAcesso;
+    document.getElementById('dica-nova-senha').textContent = primeiroAcesso
+        ? 'Obrigatória no primeiro acesso. Pelo menos 8 caracteres.'
+        : 'Opcional. Deixe em branco para manter a senha atual.';
 
     const mostrarMensagem = (texto, sucesso) => {
         mensagem.textContent = texto;
@@ -34,8 +37,8 @@ if (usuario) {
         mensagem.className = `mt-5 rounded-lg px-3 py-2 text-sm font-semibold ${sucesso ? 'bg-pap/10 text-pap-escuro' : 'bg-perigo/10 text-perigo'}`;
     };
 
-    const salvarNome = async (nome) => {
-        const atualizado = await api('/me', { method: 'PATCH', body: { nome } });
+    const salvarNome = async (nome, senha) => {
+        const atualizado = await api('/me', { method: 'PATCH', body: { nome, senha_atual: senha } });
         nomeSalvo = atualizado.nome ?? '';
         document.querySelectorAll('[data-usuario-nome]').forEach((el) => {
             el.textContent = atualizado.nome || atualizado.alias;
@@ -63,13 +66,13 @@ if (usuario) {
         mostrarMensagem('');
 
         const nome = campoNome.value.trim();
-        const querTrocarSenha = novaSenha.value !== '' || senhaAtual.value !== '' || confirmacao.value !== '';
+        const querTrocarSenha = novaSenha.value !== '' || confirmacao.value !== '';
         const nomeMudou = nome !== nomeSalvo;
 
         const faltando = {};
         if (nomeMudou && nome === '') faltando.nome = ['Informe o nome completo.'];
-        if (primeiroAcesso && !querTrocarSenha) faltando.nova_senha = ['Defina uma nova senha para continuar.'];
-        if (querTrocarSenha && senhaAtual.value === '') faltando.senha_atual = ['Informe a senha atual.'];
+        if (primeiroAcesso && novaSenha.value === '') faltando.nova_senha = ['Defina uma nova senha para continuar.'];
+        if ((nomeMudou || querTrocarSenha || primeiroAcesso) && senhaAtual.value === '') faltando.senha_atual = ['Informe a senha atual para confirmar as alterações.'];
         if (Object.keys(faltando).length > 0) {
             mostrarErros(formulario, faltando);
             return;
@@ -84,15 +87,22 @@ if (usuario) {
             try {
                 // No primeiro acesso, PATCH /me fica bloqueado até a senha ser trocada.
                 if (primeiroAcesso) {
+                    const senhaAposTroca = novaSenha.value;
                     await trocarSenha();
                     primeiroAcesso = false;
-                    if (nomeMudou) await salvarNome(nome);
+                    if (nomeMudou) await salvarNome(nome, senhaAposTroca);
                     window.location.replace('/inicio');
                     return;
                 }
 
-                if (nomeMudou) await salvarNome(nome);
-                if (querTrocarSenha) await trocarSenha();
+                if (querTrocarSenha) {
+                    const senhaAposTroca = novaSenha.value;
+                    await trocarSenha();
+                    if (nomeMudou) await salvarNome(nome, senhaAposTroca);
+                } else if (nomeMudou) {
+                    await salvarNome(nome, senhaAtual.value);
+                    senhaAtual.value = '';
+                }
                 mostrarMensagem('Alterações salvas.', true);
             } catch (erro) {
                 if (erro instanceof ErroValidacao) {

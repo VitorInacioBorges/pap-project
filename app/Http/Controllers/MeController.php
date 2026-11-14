@@ -7,6 +7,9 @@ use App\Models\User;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 use Illuminate\Http\Response;
+use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Facades\Hash;
+use Illuminate\Validation\ValidationException;
 use Laravel\Sanctum\PersonalAccessToken;
 
 class MeController extends Controller
@@ -23,9 +26,18 @@ class MeController extends Controller
 
         $dados = $request->validate([
             'nome' => ['required', 'string', 'max:255'],
+            'senha_atual' => ['required', 'string'],
         ]);
 
-        $usuario->forceFill(['nome' => $dados['nome']])->save();
+        $usuario = DB::transaction(function () use ($usuario, $dados): User {
+            $usuario = User::query()->lockForUpdate()->findOrFail($usuario->getKey());
+            if (! is_string($usuario->senha) || ! Hash::check($dados['senha_atual'], $usuario->senha)) {
+                throw ValidationException::withMessages(['senha_atual' => 'A senha atual está incorreta.']);
+            }
+            $usuario->forceFill(['nome' => $dados['nome']])->save();
+
+            return $usuario;
+        });
 
         return response()->json($this->formatar($usuario));
     }

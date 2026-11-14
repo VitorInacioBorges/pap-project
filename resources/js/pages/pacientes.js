@@ -1,5 +1,6 @@
 import { api, desabilitarEnquanto, ErroValidacao, limparErros, mostrarErros, protegerPagina } from '../api';
 import { formatarTelefone, mascararTelefone } from '../telefone';
+import { confirmarReenvio, limparConfirmacaoReenvio } from '../confirmacao-reenvio';
 
 const usuario = await protegerPagina();
 
@@ -62,17 +63,19 @@ if (usuario) {
             const quantidade = paciente.fichas_count ?? 0;
             link.textContent = `${quantidade} ${quantidade === 1 ? 'ficha' : 'fichas'}`;
             link.href = link.dataset.url.replace('__PACIENTE__', paciente.id_paciente);
+            if (!['medico', 'admin'].includes(usuario.cargo)) link.removeAttribute('href');
             link.setAttribute('aria-label', `${link.textContent} de ${nomeDe(paciente)}`);
         });
         linha.querySelectorAll('[data-criar-ficha]').forEach((link) => {
             link.href = link.dataset.url.replace('__PACIENTE__', paciente.id_paciente);
             link.setAttribute('aria-label', `Criar ficha para ${nomeDe(paciente)}`);
-            link.hidden = !paciente.ativo;
+            link.hidden = !paciente.ativo || !['medico', 'admin'].includes(usuario.cargo);
         });
         const status = linha.querySelector('[data-campo="status"]');
         status.textContent = paciente.ativo ? 'Ativo' : 'Inativo';
         status.classList.add(...(paciente.ativo ? ['border-ativo', 'text-ativo'] : ['border-perigo', 'text-perigo']));
         const botao = linha.querySelector('[data-acao="menu"]');
+        botao.hidden = usuario.cargo === 'medico';
         botao.setAttribute('aria-label', `Ações de ${nomeDe(paciente)}`);
         botao.addEventListener('click', () => abrirMenu(paciente, botao));
         return linha;
@@ -312,6 +315,15 @@ if (usuario) {
         $('senha-obrigatoria').hidden = Boolean(paciente);
         const campoSenha = $('campo-senha');
         campoSenha.required = !paciente;
+        campoSenha.disabled = Boolean(paciente);
+        $('senha-manual').hidden = Boolean(paciente);
+        $('reenvio-senha').hidden = !paciente;
+        $('sucesso-reenvio-senha').hidden = true;
+        limparConfirmacaoReenvio($('botao-reenviar-senha'), $('aviso-reenvio-senha'));
+        $('botao-reenviar-senha').disabled = !paciente?.ativo;
+        $('dica-reenvio-senha').textContent = paciente?.ativo
+            ? `Envia uma nova senha para ${paciente.email}. Os acessos anteriores serão encerrados.`
+            : 'Reative a paciente para reenviar a senha.';
         campoSenha.placeholder = paciente ? 'Deixe em branco para manter' : '••••••••';
 
         formulario.querySelectorAll('option[data-temporaria]').forEach((opcao) => opcao.remove());
@@ -323,9 +335,6 @@ if (usuario) {
                 let valor = chave ? dados[chave] : paciente[grupo];
                 if (campo.name === 'senha') valor = '';
                 if (campo.type === 'date' && valor) valor = String(valor).slice(0, 10);
-                if (['dados_pessoais.peso', 'dados_pessoais.altura', 'dados_pessoais.CA'].includes(campo.name) && valor != null) {
-                    valor = String(Number(valor)).replace('.', ',');
-                }
                 if (campo.tagName === 'SELECT' && valor && ![...campo.options].some((opcao) => opcao.value === valor)) {
                     // Valor de cadastro antigo fora da lista: mantido para não ser apagado sem aviso.
                     const antiga = new Option(`${valor} (valor antigo)`, valor);
@@ -343,11 +352,37 @@ if (usuario) {
 
     $('botao-nova').addEventListener('click', () => abrirJanela());
 
+    $('botao-reenviar-senha').addEventListener('click', (evento) => {
+        const paciente = emEdicao;
+        if (!paciente?.ativo) return;
+        $('sucesso-reenvio-senha').hidden = true;
+        $('mensagem-janela').hidden = true;
+        if (!confirmarReenvio(evento.currentTarget, $('aviso-reenvio-senha'))) return;
+        desabilitarEnquanto(evento.currentTarget, async () => {
+            $('sucesso-reenvio-senha').hidden = true;
+            $('mensagem-janela').hidden = true;
+            try {
+                const resposta = await api(`/pacientes/${paciente.id_paciente}/reenviar-senha`, { method: 'POST' });
+                paciente.first_login = true;
+                if (emEdicao?.id_paciente !== paciente.id_paciente) return;
+                $('sucesso-reenvio-senha').textContent = resposta.message;
+                $('sucesso-reenvio-senha').hidden = false;
+            } catch (erro) {
+                if (emEdicao?.id_paciente !== paciente.id_paciente) return;
+                $('mensagem-janela').textContent = erro.message;
+                $('mensagem-janela').hidden = false;
+            }
+        });
+    });
+
+    $('cancelar-reenvio-senha').addEventListener('click', () => {
+        limparConfirmacaoReenvio($('botao-reenviar-senha'), $('aviso-reenvio-senha'));
+        $('botao-reenviar-senha').focus();
+    });
+
     document.querySelectorAll('dialog [data-fechar]').forEach((botao) => {
         botao.addEventListener('click', () => botao.closest('dialog').close());
     });
-
-    const NUMERICOS = ['peso', 'altura', 'CA'];
 
     const montarCorpo = () => {
         const corpo = { dados_pessoais: {} };
@@ -355,7 +390,6 @@ if (usuario) {
             const [grupo, chave] = campo.name.split('.');
             let valor = campo.value.trim();
             if (chave) {
-                if (NUMERICOS.includes(chave) && valor) valor = valor.replace(',', '.');
                 corpo.dados_pessoais[chave] = valor === '' ? null : valor;
             } else if (grupo === 'senha') {
                 if (campo.value !== '') corpo.senha = campo.value;

@@ -1,7 +1,7 @@
 @extends('layouts.app')
 
 @section('title', 'Pacientes · Projeto PAP')
-@section('cargos', 'secretario,admin')
+@section('cargos', 'secretario,medico,admin')
 
 @push('scripts')
     @vite('resources/js/pages/pacientes.js')
@@ -14,7 +14,7 @@
             <p class="mt-1 text-base md:text-lg">Cadastro, edição e ocultação de pacientes.</p>
         </div>
 
-        <button type="button" id="botao-nova"
+        <button type="button" id="botao-nova" data-so-cargos="secretario,admin" hidden
                 class="inline-flex min-h-12 items-center gap-2 rounded-xl bg-pap px-4 font-heading text-base font-bold text-white transition hover:-translate-y-0.5 hover:bg-pap-escuro hover:shadow-md active:translate-y-0 active:scale-[0.98] focus:outline-none focus-visible:ring-2 focus-visible:ring-pap focus-visible:ring-offset-2 md:text-lg">
             <svg class="h-5 w-5" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3.5" stroke-linecap="round" aria-hidden="true">
                 <path d="M12 4v16M4 12h16" />

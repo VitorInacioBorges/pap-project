@@ -13,3 +13,5 @@ Route::view('/pacientes/{paciente}/fichas/criar', 'patients.fichas', ['cadastro'
 Route::view('/pacientes/{paciente}/fichas', 'patients.fichas', ['cadastro' => false])->name('fichas.index');
 Route::view('/configuracoes', 'profile.edit')->name('configuracoes');
 Route::view('/paciente', 'portal.index')->name('paciente');
+
+Route::view('/colaboradores', 'dashboard.colaboradores')->name('colaboradores');

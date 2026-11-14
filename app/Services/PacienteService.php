@@ -2,9 +2,12 @@
 
 namespace App\Services;
 
+use App\Mail\SenhaTemporariaPaciente;
 use App\Models\Paciente;
 use Illuminate\Contracts\Pagination\LengthAwarePaginator;
 use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Facades\Mail;
+use Illuminate\Support\Str;
 
 class PacienteService
 {
@@ -99,6 +102,17 @@ class PacienteService
             }
 
             return $paciente->load('dadosPessoais');
+        });
+    }
+
+    public function reenviarSenha(Paciente $paciente): void
+    {
+        DB::transaction(function () use ($paciente) {
+            $paciente = Paciente::query()->lockForUpdate()->findOrFail($paciente->getKey());
+            $senha = Str::password(12);
+            $paciente->update(['senha' => $senha, 'first_login' => true]);
+            $paciente->tokens()->delete();
+            Mail::to($paciente->email)->queue(new SenhaTemporariaPaciente($paciente->email, $senha));
         });
     }
 

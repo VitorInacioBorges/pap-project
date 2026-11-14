@@ -14,6 +14,7 @@ export default defineConfig({
                 'resources/js/pages/configuracoes.js',
                 'resources/js/pages/pacientes.js',
                 'resources/js/pages/fichas.js',
+                'resources/js/pages/colaboradores.js',
                 'resources/js/pages/portal.js',
             ],
             refresh: true,

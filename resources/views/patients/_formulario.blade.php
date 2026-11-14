@@ -13,12 +13,6 @@
             ['dados_pessoais.telefone', 'Telefone', 'tel', false, '', ['inputmode' => 'tel', 'placeholder' => '(42) 99999-9999', 'maxlength' => 30]],
             ['dados_pessoais.profissao', 'Profissão', 'text', false, '', ['maxlength' => 255]],
         ],
-        'corporais' => [
-            ['dados_pessoais.peso', 'Peso (kg)', 'text', false, '', ['inputmode' => 'decimal', 'placeholder' => '65,5']],
-            ['dados_pessoais.altura', 'Altura (m)', 'text', false, '', ['inputmode' => 'decimal', 'placeholder' => '1,65']],
-            ['dados_pessoais.PA', 'Pressão Arterial', 'text', false, '', ['placeholder' => '120/80', 'maxlength' => 20]],
-            ['dados_pessoais.CA', 'CA', 'text', false, '', ['inputmode' => 'decimal', 'placeholder' => '80']],
-        ],
     ];
 
     $idDe = fn (string $nome) => 'campo-'.str_replace(['.', '_'], '-', strtolower($nome));
@@ -29,13 +23,13 @@
     <form id="form-paciente" novalidate class="p-5 md:p-7">
         <h2 id="titulo-janela" class="text-center font-heading text-2xl font-bold md:text-3xl">Nova Paciente</h2>
 
-        @foreach (['pessoais' => 'Informações Pessoais', 'corporais' => 'Informações Corporais'] as $grupo => $titulo)
+        @foreach (['pessoais' => 'Informações Pessoais'] as $grupo => $titulo)
             <fieldset class="mt-5">
                 <legend class="{{ $secao }}">{{ $titulo }}</legend>
                 <div class="mt-2 grid grid-cols-2 gap-x-3 gap-y-3">
                     @foreach ($campos[$grupo] as [$nome, $texto, $tipo, $req, $classe, $attrs])
                         @php $id = $idDe($nome); @endphp
-                        <div class="{{ $grupo === 'corporais' ? 'col-span-1' : 'col-span-2 md:col-span-1' }} {{ $classe }}">
+                        <div class="col-span-2 md:col-span-1 {{ $classe }}">
                             <label for="{{ $id }}" class="{{ $rotulo }}">{{ $texto }}{!! $req ? $obrigatorio : '' !!}</label>
                             <input id="{{ $id }}" name="{{ $nome }}" type="{{ $tipo }}" @if ($req) required @endif
                                    aria-describedby="erro-{{ $id }}" class="{{ $campo }}"
@@ -73,11 +67,25 @@
                     <p id="erro-campo-email" data-erro="email" class="{{ $erro }}" hidden></p>
                 </div>
                 <div class="col-span-2 md:col-span-1">
+                    <div id="senha-manual">
                     <label for="campo-senha" class="{{ $rotulo }}">Senha<span id="senha-obrigatoria">{!! $obrigatorio !!}</span></label>
                     <input id="campo-senha" name="senha" type="password" autocomplete="new-password" minlength="8"
                            placeholder="••••••••" aria-describedby="erro-campo-senha dica-campo-senha" class="{{ $campo }}">
                     <p id="dica-campo-senha" class="mt-1 text-sm text-black/60">Pelo menos 8 caracteres.</p>
                     <p id="erro-campo-senha" data-erro="senha" class="{{ $erro }}" hidden></p>
+                    </div>
+                    <div id="reenvio-senha" hidden>
+                        <p class="{{ $rotulo }}">Recuperar acesso</p>
+                        <button id="botao-reenviar-senha" type="button" aria-describedby="dica-reenvio-senha" aria-controls="aviso-reenvio-senha" aria-expanded="false"
+                                class="mt-1 inline-flex min-h-11 items-center rounded-xl border-2 border-pap px-4 font-heading text-sm font-bold text-pap-escuro hover:bg-pap-fundo disabled:cursor-wait disabled:opacity-70 focus-visible:outline-2 focus-visible:outline-pap">Reenviar senha temporária</button>
+                        <div id="aviso-reenvio-senha" role="status" class="mt-2 rounded-xl border border-pap/20 bg-pap-fundo p-3" hidden>
+                            <p id="dica-reenvio-senha" class="text-sm text-black/70"></p>
+                            <p class="mt-1 text-sm text-black/70">Salve alterações de e-mail antes de reenviar. A paciente precisará trocar a senha ao entrar.</p>
+                            <p class="mt-2 text-sm font-semibold">Clique novamente em “Confirmar reenvio” para continuar.</p>
+                            <button id="cancelar-reenvio-senha" type="button" class="mt-1 min-h-11 rounded-lg px-2 text-sm font-semibold text-pap-escuro underline focus-visible:outline-2 focus-visible:outline-pap">Cancelar reenvio</button>
+                        </div>
+                        <p id="sucesso-reenvio-senha" role="status" class="mt-2 text-sm font-semibold text-pap-escuro" hidden></p>
+                    </div>
                 </div>
             </div>
         </fieldset>

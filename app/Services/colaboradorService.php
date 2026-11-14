@@ -1,76 +1,86 @@
 <?php
 
 namespace App\Services;
-use App\Models\User;
-use Illuminate\Support\Facades\Hash;
-use Illuminate\Support\Facades\DB;
 
+use App\Models\User;
+use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Facades\Hash;
+use Illuminate\Support\Str;
 
 class colaboradorService
 {
-    public function cria(array $dados){
-        $identificador = $this->geraIdentificador($dados['cargo']);
-        $senhaTemporaria = fake() -> regexify(('[A-Za-z0-9(|#$%&*]{12}'));
+    /** @param array{nome: string, email: string, cargo: string} $dados */
+    public function cria(array $dados): array
+    {
+        do {
+            $identificador = $this->geraIdentificador($dados['cargo']);
+        } while (User::withTrashed()->where('alias', $identificador)->exists());
+        $senhaTemporaria = Str::password(12);
         $user = User::create([
-            ...$dados, 
-            'alias' => $identificador, 
-            'senha'=>Hash::make($senhaTemporaria),
-            ]);
-
+            ...$dados,
+            'alias' => $identificador,
+            'senha' => Hash::make($senhaTemporaria),
+        ]);
 
         return [
-            ...$dados,
-            'alias'=>$identificador,
-            'senhaTemporaria'=>$senhaTemporaria
-            ];
+            ...$user->refresh()->toArray(),
+            'senhaTemporaria' => $senhaTemporaria,
+        ];
 
     }
 
-    private function geraIdentificador(string $cargo){
-        
+    private function geraIdentificador(string $cargo): string
+    {
 
-        $string = fake()->regexify('[A-Za-z0-9]{8}');
+        $string = Str::random(8);
+
         return match ($cargo) {
-            'medico' => 'MD-' . $string,
-            'enfermeiro' => 'EN-' . $string,
-            'secretario' => 'SE-' . $string,
+            'medico' => 'MD-'.$string,
+            'enfermeiro' => 'EN-'.$string,
+            'secretario' => 'SE-'.$string,
             'admin' => 'AD-'.$string,
-            };
+        };
     }
 
-    public function listarColaboradorPorId(String $id){
+    public function listarColaboradorPorId(string $id)
+    {
 
         $User = User::where('id_usuario', $id)->first();
+
         return $User;
 
     }
 
-    public function atualizarColaborador(string $id, array $dados){
-        $user = User::findOrFail($id);
-        $identificador = $this->geraIdentificador($dados['cargo']);
+    public function atualizarColaborador(string $id, array $dados): User
+    {
+        return DB::transaction(function () use ($id, $dados): User {
+            $user = User::query()->lockForUpdate()->findOrFail($id);
 
-        if(isset($dados['senha'])){
-            $dados['senha'] = Hash::make($dados['senha']);
-        }
+            if (isset($dados['senha'])) {
+                $dados['senha'] = Hash::make($dados['senha']);
+            }
 
-        if (isset($dados['cargo']) && $dados['cargo'] !== $user->cargo) {
-        $dados['alias'] = $this->geraIdentificador($dados['cargo']);
-        }
+            if (isset($dados['cargo']) && $dados['cargo'] !== $user->cargo) {
+                $dados['alias'] = $this->geraIdentificador($dados['cargo']);
+            }
 
-        $user -> update($dados);
+            $user->update($dados);
+            if (array_key_exists('ativo', $dados) && (! $user->ativo || $user->wasChanged('ativo'))) {
+                $user->tokens()->delete();
+            }
 
-        return $user;
+            return $user;
+        });
     }
 
     public function removerColaborador(string $id): void
-{
-    $user = User::findOrFail($id);
+    {
+        $user = User::findOrFail($id);
 
-    DB::transaction(function () use ($user) {
-        $user->tokens()->delete();
-        $user->forceFill(['ativo' => false])->save();
-        $user->delete();
-    });
-}
-
+        DB::transaction(function () use ($user) {
+            $user->tokens()->delete();
+            $user->forceFill(['ativo' => false])->save();
+            $user->delete();
+        });
+    }
 }

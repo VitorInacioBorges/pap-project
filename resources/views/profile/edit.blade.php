@@ -43,8 +43,9 @@
 
             <div class="md:col-span-2">
                 <label for="campo-senha-atual" class="{{ $rotulo }}">Senha Atual</label>
-                <input id="campo-senha-atual" name="senha_atual" type="password" autocomplete="current-password"
-                       placeholder="••••••••" aria-describedby="erro-senha-atual" class="{{ $campoSenha }}">
+                <input id="campo-senha-atual" name="senha_atual" type="password" autocomplete="current-password" required
+                       placeholder="••••••••" aria-describedby="erro-senha-atual dica-senha-atual" class="{{ $campoSenha }}">
+                <p id="dica-senha-atual" class="mt-1 text-sm text-black/60">Informe sua senha atual para confirmar as alterações.</p>
                 <p id="erro-senha-atual" data-erro="senha_atual" class="{{ $erro }}" hidden></p>
             </div>
 
@@ -52,7 +53,7 @@
                 <label for="campo-nova-senha" class="{{ $rotulo }}">Nova Senha</label>
                 <input id="campo-nova-senha" name="nova_senha" type="password" autocomplete="new-password" minlength="8"
                        placeholder="••••••••" aria-describedby="erro-nova-senha dica-nova-senha" class="{{ $campoSenha }}">
-                <p id="dica-nova-senha" class="mt-1 text-sm text-black/60">Pelo menos 8 caracteres.</p>
+                <p id="dica-nova-senha" class="mt-1 text-sm text-black/60">Opcional. Deixe em branco para manter a senha atual.</p>
                 <p id="erro-nova-senha" data-erro="nova_senha" class="{{ $erro }}" hidden></p>
             </div>
 

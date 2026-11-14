@@ -81,7 +81,8 @@
             @php
                 $itens = [
                     ['rota' => 'inicio', 'rotulo' => 'Início', 'cargos' => null],
-                    ['rota' => 'pacientes', 'rotulo' => 'Pacientes', 'cargos' => 'secretario,admin'],
+                    ['rota' => 'pacientes', 'rotulo' => 'Pacientes', 'cargos' => 'secretario,medico,admin'],
+                    ['rota' => 'colaboradores', 'rotulo' => 'Colaboradores', 'cargos' => 'admin'],
                     ['rota' => 'configuracoes', 'rotulo' => 'Configurações', 'cargos' => null],
                 ];
             @endphp

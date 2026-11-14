@@ -1,6 +1,7 @@
 <?php
 
 use App\Models\Anamnese;
+use App\Support\CamposAnamnese;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Laravel\Sanctum\Sanctum;
 
@@ -14,6 +15,7 @@ it('cadastra ficha vinculada a paciente e ao usuario autenticado', function () {
     $this->postJson("/api/pacientes/{$paciente->getKey()}/fichas", [
         'data_atendimento' => '2026-11-14T13:30:00.000Z',
         'observacoes' => 'Retorno em 30 dias.',
+        'dados_clinicos' => ['queixa_principal' => 'Consulta de rotina', 'historia_atual' => 'Sem queixas atuais.'],
         'paciente_id' => $outra->getKey(),
         'usuario_id' => 999,
     ])->assertCreated()
@@ -31,7 +33,7 @@ it('cadastra ficha vinculada a paciente e ao usuario autenticado', function () {
 });
 
 it('lista somente fichas da paciente em ordem de atendimento e ignora excluidas', function () {
-    $usuario = entrarComo('secretario');
+    $usuario = entrarComo('medico');
     $paciente = novaPaciente();
     $outra = novaPaciente('111.111.111-11', 'outra@example.com');
     $antiga = Anamnese::factory()->for($paciente, 'paciente')->for($usuario, 'usuario')->create(['data_atendimento' => '2026-11-13 10:00:00']);
@@ -51,7 +53,7 @@ it('mantem o responsavel no historico apos sua exclusao logica', function () {
     $paciente = novaPaciente();
     Anamnese::factory()->for($paciente, 'paciente')->for($usuario, 'usuario')->create();
     $usuario->delete();
-    entrarComo('secretario');
+    entrarComo('medico');
 
     $this->getJson("/api/pacientes/{$paciente->getKey()}/fichas")
         ->assertOk()->assertJsonPath('data.0.usuario.alias', $usuario->alias);
@@ -68,7 +70,7 @@ it('recusa cargos sem acesso a pacientes com 403', function (string $cargo) {
     $paciente = novaPaciente();
     $this->getJson("/api/pacientes/{$paciente->getKey()}/fichas")->assertForbidden();
     $this->postJson("/api/pacientes/{$paciente->getKey()}/fichas", [])->assertForbidden();
-})->with(['medico', 'enfermeiro']);
+})->with(['secretario', 'enfermeiro']);
 
 it('impede que paciente acesse fichas pela API de colaboradores', function () {
     $paciente = novaPaciente()->forceFill(['first_login' => false]);
@@ -116,9 +118,9 @@ it('valida data e observacoes antes de criar ficha', function (array $dados, str
 ]);
 
 it('aceita ficha sem observacoes', function () {
-    entrarComo('secretario');
+    entrarComo('medico');
     $paciente = novaPaciente();
-    $this->postJson("/api/pacientes/{$paciente->getKey()}/fichas", ['data_atendimento' => '2026-11-14T13:30:00.000Z'])
+    $this->postJson("/api/pacientes/{$paciente->getKey()}/fichas", ['data_atendimento' => '2026-11-14T13:30:00.000Z', 'dados_clinicos' => ['queixa_principal' => 'Retorno', 'historia_atual' => 'Sem queixas.']])
         ->assertCreated()->assertJsonPath('observacoes', null);
     $this->assertDatabaseCount('anamnese', 1);
 });
@@ -126,3 +128,64 @@ it('aceita ficha sem observacoes', function () {
 it('abre historico e cadastro com a paciente vinculada', function (string $caminho) {
     $this->get($caminho)->assertOk()->assertSee('data-paciente="123"', false);
 })->with(['/pacientes/123/fichas', '/pacientes/123/fichas/criar']);
+
+it('grava a anamnese estruturada e permite consultar todos os campos', function () {
+    entrarComo('medico');
+    $paciente = novaPaciente();
+    $clinicos = [
+        'queixa_principal' => 'Dor pélvica há uma semana',
+        'historia_atual' => 'Relato da evolução dos sintomas.',
+        'alergias' => 'Nega alergias conhecidas.',
+        'medicamentos' => 'Medicação e posologia relatadas.',
+        'peso' => 65.5, 'altura' => 1.65, 'saturacao' => 98,
+        'gestacoes' => 0, 'ultima_menstruacao' => '2026-11-01',
+        'conduta' => 'Orientações registradas pelo profissional.',
+    ];
+    $resposta = $this->postJson("/api/pacientes/{$paciente->getKey()}/fichas", [
+        'data_atendimento' => '2026-11-14T13:30:00.000Z', 'dados_clinicos' => $clinicos,
+    ])->assertCreated()->assertJsonPath('dados_clinicos', $clinicos);
+    expect(Anamnese::findOrFail($resposta->json('id'))->dados_clinicos)->toBe($clinicos);
+    $this->getJson("/api/pacientes/{$paciente->getKey()}/fichas")
+        ->assertJsonPath('data.0.dados_clinicos', $clinicos);
+});
+
+it('valida campos clinicos antes de salvar com 422', function (array $clinicos, string $campo) {
+    entrarComo('admin');
+    $paciente = novaPaciente();
+    $this->postJson("/api/pacientes/{$paciente->getKey()}/fichas", [
+        'data_atendimento' => '2026-11-14T13:30:00.000Z',
+        'dados_clinicos' => $clinicos,
+    ])->assertUnprocessable()->assertJsonValidationErrors([$campo]);
+    $this->assertDatabaseCount('anamnese', 0);
+})->with([
+    'queixa obrigatoria' => [['historia_atual' => 'Relato'], 'dados_clinicos.queixa_principal'],
+    'historia obrigatoria' => [['queixa_principal' => 'Consulta'], 'dados_clinicos.historia_atual'],
+    'campo desconhecido' => [['injetado' => 'valor'], 'dados_clinicos'],
+    'peso negativo' => [['peso' => -1], 'dados_clinicos.peso'],
+    'saturacao acima de 100' => [['saturacao' => 101], 'dados_clinicos.saturacao'],
+    'gestacoes fracionarias' => [['gestacoes' => 1.5], 'dados_clinicos.gestacoes'],
+    'data invalida' => [['ultima_menstruacao' => '2026-02-30'], 'dados_clinicos.ultima_menstruacao'],
+    'texto longo' => [['alergias' => str_repeat('a', 10001)], 'dados_clinicos.alergias'],
+]);
+
+it('medico consulta pacientes mas nao altera o cadastro administrativo', function () {
+    entrarComo('medico');
+    $paciente = novaPaciente();
+    $this->getJson('/api/pacientes')->assertOk();
+    $this->getJson("/api/pacientes/{$paciente->getKey()}")->assertOk();
+    $this->postJson('/api/pacientes', [])->assertForbidden();
+    $this->putJson("/api/pacientes/{$paciente->getKey()}", [])->assertForbidden();
+    $this->deleteJson("/api/pacientes/{$paciente->getKey()}")->assertForbidden();
+});
+
+it('organiza a anamnese em categorias mantendo cada campo uma unica vez', function () {
+    $resposta = $this->get('/pacientes/123/fichas/criar')->assertOk();
+    preg_match_all('/data-clinico="([^"]+)"/', $resposta->getContent(), $camposRenderizados);
+    $camposEsperados = array_keys(array_merge(...array_values(CamposAnamnese::SECOES)));
+    expect($camposRenderizados[1])->toHaveCount(count($camposEsperados));
+    expect(array_diff($camposEsperados, $camposRenderizados[1]))->toBeEmpty();
+    expect(array_unique($camposRenderizados[1]))->toHaveCount(count($camposEsperados));
+    $resposta->assertSee('Ciclo menstrual e climatério')
+        ->assertSee('Histórico obstétrico')
+        ->assertSee('Medidas corporais');
+});

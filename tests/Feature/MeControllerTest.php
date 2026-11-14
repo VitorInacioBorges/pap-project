@@ -60,7 +60,7 @@ it('atualiza o nome do colaborador', function () {
 
     Sanctum::actingAs($secretario->forceFill(['first_login' => false]));
 
-    $this->patchJson('/api/me', ['nome' => 'Fulana Atualizada'])
+    $this->patchJson('/api/me', ['nome' => 'Fulana Atualizada', 'senha_atual' => 'senha-colaborador-123'])
         ->assertOk()
         ->assertJsonPath('nome', 'Fulana Atualizada');
 
@@ -125,3 +125,25 @@ it('responde erros de validacao em portugues', function () {
     $this->patchJson('/api/me', ['nome' => ''])
         ->assertJsonPath('errors.nome.0', 'O campo nome é obrigatório.');
 });
+
+it('admin altera o nome com senha atual sem trocar a senha ou encerrar sessao', function () {
+    $admin = criarSecretario(['nome' => 'Nome Antigo', 'cargo' => 'admin', 'first_login' => false]);
+    Sanctum::actingAs($admin);
+    $senha = $admin->senha;
+    $token = $admin->createToken('sessao-atual')->plainTextToken;
+
+    $this->patchJson('/api/me', ['nome' => 'Nome Atualizado', 'senha_atual' => 'senha-colaborador-123'])
+        ->assertOk()->assertJsonPath('nome', 'Nome Atualizado');
+    expect($admin->refresh()->senha)->toBe($senha);
+    expect($admin->first_login)->toBeFalse();
+    $this->withToken($token)->getJson('/api/me')->assertOk()->assertJsonPath('nome', 'Nome Atualizado');
+    $this->assertDatabaseCount('personal_access_tokens', 1);
+});
+
+it('recusa alteracao de nome sem confirmar a senha atual com 422', function (mixed $senha) {
+    $admin = criarSecretario(['nome' => 'Nome Antigo', 'cargo' => 'admin', 'first_login' => false]);
+    Sanctum::actingAs($admin);
+    $this->patchJson('/api/me', ['nome' => 'Nome Novo', 'senha_atual' => $senha])
+        ->assertUnprocessable()->assertJsonValidationErrors(['senha_atual']);
+    expect($admin->refresh()->nome)->toBe('Nome Antigo');
+})->with([null, '', 'senha-incorreta']);

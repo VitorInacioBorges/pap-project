@@ -47,3 +47,48 @@
     --destaque-claro: var(--color-pap-fundo);
     --fundo-tema: var(--color-pap-fundo);
 }
+
+.ficha-categoria {
+    container-type: inline-size;
+    padding: 1rem 1.25rem 1.25rem;
+}
+
+.ficha-categoria-campos {
+    display: grid;
+    grid-template-columns: minmax(0, 1fr);
+    align-items: start;
+    gap: 1.25rem;
+    padding-top: 0.25rem;
+}
+
+@container (min-width: 30rem) {
+    .ficha-categoria-campos {
+        grid-template-columns: repeat(2, minmax(0, 1fr));
+    }
+
+    .ficha-rotulo {
+        min-height: 2.5rem;
+    }
+
+    .ficha-campo--inteiro {
+        grid-column: 1 / -1;
+    }
+}
+
+@container (min-width: 48rem) {
+    .ficha-categoria-campos--compactos {
+        grid-template-columns: repeat(6, minmax(0, 1fr));
+    }
+
+    .ficha-categoria-campos--compactos > .ficha-campo {
+        grid-column: span 2;
+    }
+
+    .ficha-categoria-campos--compactos > .ficha-campo--meia {
+        grid-column: span 3;
+    }
+
+    .ficha-categoria-campos--compactos > .ficha-campo--inteiro {
+        grid-column: 1 / -1;
+    }
+}

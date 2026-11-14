@@ -62,6 +62,7 @@ class Anamnese extends Model
         'usuario_id',
         'data_atendimento',
         'observacoes',
+        'dados_clinicos',
     ];
 
     /*data_atendimento é o atributo que queremos configurar.
@@ -70,6 +71,7 @@ class Anamnese extends Model
     {
         return [
             'data_atendimento' => 'datetime',
+            'dados_clinicos' => 'array',
         ];
     }
 

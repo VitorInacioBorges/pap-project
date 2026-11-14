@@ -21,11 +21,18 @@
     </div>
 
     <div class="mt-10 grid gap-4 sm:grid-cols-[repeat(auto-fill,minmax(270px,280px))] md:mt-14">
-        <a href="{{ route('pacientes') }}" data-so-cargos="secretario,admin" hidden
+        <a href="{{ route('pacientes') }}" data-so-cargos="secretario,medico,admin" hidden
            class="group flex min-h-32 flex-col rounded-2xl border-2 border-black/15 bg-white p-4 text-tinta transition duration-200 hover:-translate-y-0.5 hover:border-pap hover:bg-pap-cartao hover:text-white hover:shadow-md active:translate-y-0 focus:outline-none focus-visible:ring-2 focus-visible:ring-pap focus-visible:ring-offset-2">
             <span class="h-9 w-9 bg-pap transition group-hover:bg-white" style="mask: url('{{ asset('images/patients-icon.svg') }}') center / contain no-repeat; -webkit-mask: url('{{ asset('images/patients-icon.svg') }}') center / contain no-repeat;" aria-hidden="true"></span>
             <span class="mt-3 font-heading text-lg font-bold leading-tight">Pacientes</span>
             <span class="mt-1 text-base leading-snug">Cadastro e listagem de pacientes.</span>
+        </a>
+
+        <a href="{{ route('colaboradores') }}" data-so-cargos="admin" hidden
+           class="group flex min-h-32 flex-col rounded-2xl border-2 border-black/15 bg-white p-4 text-tinta transition duration-200 hover:-translate-y-0.5 hover:border-pap hover:bg-pap-cartao hover:text-white hover:shadow-md active:translate-y-0 focus:outline-none focus-visible:ring-2 focus-visible:ring-pap focus-visible:ring-offset-2">
+            <span class="h-9 w-9 bg-pap transition group-hover:bg-white" style="mask: url('{{ asset('images/collaborators-icon.svg') }}') center / contain no-repeat; -webkit-mask: url('{{ asset('images/collaborators-icon.svg') }}') center / contain no-repeat;" aria-hidden="true"></span>
+            <span class="mt-3 font-heading text-lg font-bold leading-tight">Colaboradores</span>
+            <span class="mt-1 text-base leading-snug">Cadastrar médicos e atendentes.</span>
         </a>
 
         <a href="{{ route('configuracoes') }}"
