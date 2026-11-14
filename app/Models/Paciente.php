@@ -2,6 +2,7 @@
 
 namespace App\Models;
 
+use Illuminate\Database\Eloquent\Relations\HasMany;
 use Illuminate\Database\Eloquent\Relations\HasOne;
 use Illuminate\Database\Eloquent\SoftDeletes;
 use Illuminate\Foundation\Auth\User as Authenticatable;
@@ -46,5 +47,10 @@ class Paciente extends Authenticatable
     public function dadosPessoais(): HasOne
     {
         return $this->hasOne(DadosPessoais::class, 'id_paciente', 'id_paciente');
+    }
+
+    public function fichas(): HasMany
+    {
+        return $this->hasMany(Anamnese::class, 'paciente_id', 'id_paciente');
     }
 }

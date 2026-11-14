@@ -13,7 +13,7 @@ function dadosNovaPaciente(array $extra = []): array
     return array_replace_recursive([
         'email' => 'marlene@example.com',
         'senha' => 'senha-segura-123',
-        'cpf' => '123.456.789-01',
+        'cpf' => '123.456.789-09',
         'dados_pessoais' => [
             'nome' => 'Marlene Souza',
             'data_nascimento' => '1989-07-06',
@@ -48,11 +48,11 @@ it('nao grava nada se os dados pessoais forem invalidos', function () {
 });
 
 it('grava o cpf sempre com mascara', function () {
-    $this->postJson('/api/pacientes', dadosNovaPaciente(['cpf' => '12345678901']))
+    $this->postJson('/api/pacientes', dadosNovaPaciente(['cpf' => '12345678909']))
         ->assertCreated()
-        ->assertJsonPath('cpf', '123.456.789-01');
+        ->assertJsonPath('cpf', '123.456.789-09');
 
-    $this->assertDatabaseHas('pacientes', ['cpf' => '123.456.789-01']);
+    $this->assertDatabaseHas('pacientes', ['cpf' => '123.456.789-09']);
 });
 
 it('recusa cpf em formato invalido', function () {
@@ -62,9 +62,9 @@ it('recusa cpf em formato invalido', function () {
 });
 
 it('recusa o mesmo cpf em outro formato', function () {
-    novaPaciente('123.456.789-01', 'outra@example.com');
+    novaPaciente('123.456.789-09', 'outra@example.com');
 
-    $this->postJson('/api/pacientes', dadosNovaPaciente(['cpf' => '12345678901']))
+    $this->postJson('/api/pacientes', dadosNovaPaciente(['cpf' => '12345678909']))
         ->assertUnprocessable()
         ->assertJsonValidationErrors(['cpf']);
 });
@@ -101,9 +101,55 @@ it('edita a paciente sem trocar a senha quando ela nao vem', function () {
 });
 
 it('recusa cpf ja gravado sem mascara por cadastro antigo', function () {
-    novaPaciente('12345678901', 'antiga@example.com');
+    novaPaciente('12345678909', 'antiga@example.com');
 
-    $this->postJson('/api/pacientes', dadosNovaPaciente(['cpf' => '123.456.789-01']))
+    $this->postJson('/api/pacientes', dadosNovaPaciente(['cpf' => '123.456.789-09']))
         ->assertUnprocessable()
         ->assertJsonValidationErrors(['cpf']);
+});
+
+it('recusa cpf com digitos verificadores invalidos sem gravar paciente', function (mixed $cpf) {
+    $this->postJson('/api/pacientes', dadosNovaPaciente(['cpf' => $cpf]))
+        ->assertUnprocessable()
+        ->assertJsonValidationErrors(['cpf']);
+
+    $this->assertDatabaseCount('pacientes', 0);
+    $this->assertDatabaseCount('dados_pessoais', 0);
+})->with([
+    'primeiro verificador errado' => '529.982.247-15',
+    'segundo verificador errado' => '529.982.247-26',
+    'cpf antigo ficticio' => '123.456.789-01',
+    'curto' => '123456789',
+    'longo' => '529982247250',
+    'letras' => '5299822472a',
+    'array' => [['52998224725']],
+    ...array_map(fn (int $digito) => str_repeat((string) $digito, 11), range(0, 9)),
+]);
+
+it('aceita cpf com os dois verificadores corretos', function (string $cpf, string $formatado) {
+    $this->postJson('/api/pacientes', dadosNovaPaciente(['cpf' => $cpf]))
+        ->assertCreated()->assertJsonPath('cpf', $formatado);
+    $this->assertDatabaseHas('pacientes', ['cpf' => $formatado]);
+})->with([
+    ['52998224725', '529.982.247-25'],
+    ['111.444.777-35', '111.444.777-35'],
+    ['01234567890', '012.345.678-90'],
+    ['12345678909', '123.456.789-09'],
+]);
+
+it('recusa alterar cpf para invalido e preserva os dados existentes', function () {
+    $paciente = novaPaciente(cpf: '529.982.247-25');
+    $this->putJson("/api/pacientes/{$paciente->id_paciente}", ['cpf' => '52998224726'])
+        ->assertUnprocessable()
+        ->assertJsonPath('errors.cpf.0', 'CPF inválido. Confira os números informados.');
+    $this->assertDatabaseHas('pacientes', ['id_paciente' => $paciente->id_paciente, 'cpf' => '529.982.247-25']);
+});
+
+it('permite corrigir o cpf e reenviar o mesmo cpf valido na edicao', function () {
+    $paciente = novaPaciente();
+    $this->putJson("/api/pacientes/{$paciente->id_paciente}", ['cpf' => '52998224725'])
+        ->assertOk()->assertJsonPath('cpf', '529.982.247-25');
+    $this->putJson("/api/pacientes/{$paciente->id_paciente}", ['cpf' => '529.982.247-25'])
+        ->assertOk();
+    $this->assertDatabaseHas('pacientes', ['id_paciente' => $paciente->id_paciente, 'cpf' => '529.982.247-25']);
 });

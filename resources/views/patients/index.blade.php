@@ -112,8 +112,12 @@
                 <span class="block font-semibold" data-campo="nome"></span>
                 <span class="block" data-campo="cpf"></span>
                 <span class="block" data-campo="nascimento"></span>
+                @include('patients._fichas')
             </td>
-            <td class="hidden truncate px-3 py-4 md:table-cell" data-campo="nome"></td>
+            <td class="hidden px-3 py-4 md:table-cell">
+                <span class="block truncate" data-campo="nome"></span>
+                @include('patients._fichas')
+            </td>
             <td class="hidden px-3 py-4 md:table-cell" data-campo="cpf"></td>
             <td class="hidden px-3 py-4 md:table-cell" data-campo="nascimento"></td>
             <td class="px-2 py-3">
@@ -148,10 +152,14 @@
         <p class="mt-3 text-base leading-snug">
             <span id="nome-exclusao" class="font-semibold"></span> some de todas as listas e não pode mais entrar no sistema.
         </p>
+        <label for="confirmacao-nome" class="mt-4 block font-heading text-sm font-bold">Digite o nome completo da paciente para confirmar</label>
+        <input id="confirmacao-nome" type="text" autocomplete="off" aria-describedby="erro-confirmacao-nome"
+               class="mt-2 min-h-11 w-full rounded-xl border-2 border-black/10 bg-campo px-3 focus:border-pap focus:outline-none aria-invalid:border-perigo">
+        <p id="erro-confirmacao-nome" role="alert" class="mt-2 text-sm text-perigo" hidden></p>
         <div class="mt-6 flex justify-end gap-3">
             <button type="button" data-fechar
                     class="min-h-11 rounded-xl px-4 font-heading font-bold text-tinta transition hover:bg-campo active:scale-[0.98]">Cancelar</button>
-            <button type="button" id="botao-confirmar-exclusao"
+            <button type="button" id="botao-confirmar-exclusao" disabled
                     class="min-h-11 rounded-xl bg-perigo px-4 font-heading font-bold text-white transition hover:brightness-90 active:scale-[0.98] disabled:opacity-70">Excluir</button>
         </div>
     </dialog>

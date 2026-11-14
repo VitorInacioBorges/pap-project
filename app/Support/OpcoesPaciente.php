@@ -31,4 +31,29 @@ class OpcoesPaciente
 
         return substr($digitos, 0, 3).'.'.substr($digitos, 3, 3).'.'.substr($digitos, 6, 3).'-'.substr($digitos, 9, 2);
     }
+
+    public static function cpfValido(string $cpf): bool
+    {
+        if (preg_match(self::FORMATO_CPF, $cpf) !== 1) {
+            return false;
+        }
+
+        $digitos = preg_replace('/\D/', '', $cpf);
+        if (preg_match('/^(\d)\1{10}$/', $digitos) === 1) {
+            return false;
+        }
+
+        for ($posicao = 9; $posicao <= 10; $posicao++) {
+            $soma = 0;
+            for ($indice = 0; $indice < $posicao; $indice++) {
+                $soma += (int) $digitos[$indice] * ($posicao + 1 - $indice);
+            }
+            $verificador = ($soma * 10) % 11;
+            if ((int) $digitos[$posicao] !== ($verificador === 10 ? 0 : $verificador)) {
+                return false;
+            }
+        }
+
+        return true;
+    }
 }

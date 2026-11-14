@@ -34,9 +34,9 @@ it('consulta uma paciente oculta', function () {
 
 it('exclui definitivamente uma paciente', function () {
     entrarComo('secretario');
-    $paciente = novaPaciente();
+    $paciente = novaPaciente(cpf: '123.456.789-09', nome: 'Maria Aparecida Silva');
 
-    $this->postJson("/api/pacientes/{$paciente->id_paciente}/excluir")->assertNoContent();
+    $this->postJson("/api/pacientes/{$paciente->id_paciente}/excluir", ['confirmacao_nome' => 'Maria Aparecida Silva'])->assertNoContent();
 
     $this->assertDatabaseHas('pacientes', [
         'id_paciente' => $paciente->id_paciente,
@@ -48,25 +48,25 @@ it('exclui definitivamente uma paciente', function () {
 
 it('libera cpf e email de paciente excluida para novo cadastro', function () {
     entrarComo('secretario');
-    $paciente = novaPaciente();
+    $paciente = novaPaciente(cpf: '123.456.789-09', nome: 'Maria Aparecida Silva');
 
-    $this->postJson("/api/pacientes/{$paciente->id_paciente}/excluir")->assertNoContent();
+    $this->postJson("/api/pacientes/{$paciente->id_paciente}/excluir", ['confirmacao_nome' => 'Maria Aparecida Silva'])->assertNoContent();
 
     $this->postJson('/api/pacientes', [
         'email' => 'paciente@example.com',
         'senha' => 'senha-segura-123',
-        'cpf' => '123.456.789-01',
+        'cpf' => '123.456.789-09',
     ])->assertCreated();
 });
 
 it('bloqueia cpf de paciente apenas oculta', function () {
     entrarComo('secretario');
-    novaPaciente()->delete();
+    novaPaciente(cpf: '123.456.789-09')->delete();
 
     $this->postJson('/api/pacientes', [
         'email' => 'outra@example.com',
         'senha' => 'senha-segura-123',
-        'cpf' => '123.456.789-01',
+        'cpf' => '123.456.789-09',
     ])->assertUnprocessable()
         ->assertJsonValidationErrors(['cpf']);
 });
@@ -78,4 +78,35 @@ it('recusa login de paciente oculta', function () {
         'email' => 'paciente@example.com',
         'senha' => 'senha-segura-123',
     ])->assertUnauthorized();
+});
+
+it('recusa exclusao sem o nome completo correto com 422', function (mixed $nome) {
+    entrarComo('secretario');
+    $paciente = novaPaciente(cpf: '123.456.789-09', nome: 'Maria Aparecida Silva');
+    $paciente->createToken('portal');
+
+    $this->postJson("/api/pacientes/{$paciente->id_paciente}/excluir", ['confirmacao_nome' => $nome])
+        ->assertUnprocessable()->assertJsonValidationErrors(['confirmacao_nome']);
+
+    $this->assertDatabaseHas('pacientes', ['id_paciente' => $paciente->id_paciente, 'hard_deleted' => false, 'deleted_at' => null]);
+    $this->assertDatabaseCount('personal_access_tokens', 1);
+})->with([null, '', 'Maria', 'Maria Silva', 'Outra Pessoa', [['Maria Aparecida Silva']]]);
+
+it('impede exclusao de paciente sem nome cadastrado com 422', function () {
+    entrarComo('secretario');
+    $paciente = novaPaciente();
+    $this->postJson("/api/pacientes/{$paciente->id_paciente}/excluir", ['confirmacao_nome' => $paciente->email])
+        ->assertUnprocessable()
+        ->assertJsonValidationErrors(['confirmacao_nome'])
+        ->assertJsonPath('errors.confirmacao_nome.0', 'Cadastre o nome completo da paciente antes de excluí-la.');
+    $this->assertDatabaseHas('pacientes', ['id_paciente' => $paciente->id_paciente, 'hard_deleted' => false]);
+});
+
+it('permite excluir paciente oculta confirmando o nome completo', function () {
+    entrarComo('admin');
+    $paciente = novaPaciente(cpf: '123.456.789-09', nome: 'Maria Aparecida Silva');
+    $paciente->delete();
+    $this->postJson("/api/pacientes/{$paciente->id_paciente}/excluir", ['confirmacao_nome' => 'Maria Aparecida Silva'])
+        ->assertNoContent();
+    $this->assertDatabaseHas('pacientes', ['id_paciente' => $paciente->id_paciente, 'hard_deleted' => true]);
 });

@@ -16,6 +16,7 @@ class PacienteService
         $query = Paciente::query()
             ->select('pacientes.*')
             ->with('dadosPessoais')
+            ->withCount('fichas')
             ->where('pacientes.hard_deleted', false);
 
         $ativos = in_array('ativos', $status, true);
@@ -58,7 +59,7 @@ class PacienteService
 
     public function buscar(Paciente $paciente): Paciente
     {
-        return $paciente->load('dadosPessoais');
+        return $paciente->load('dadosPessoais')->loadCount('fichas');
     }
 
     /**

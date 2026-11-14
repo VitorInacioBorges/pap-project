@@ -1,4 +1,5 @@
 import { api, desabilitarEnquanto, ErroValidacao, limparErros, mostrarErros, protegerPagina } from '../api';
+import { formatarTelefone, mascararTelefone } from '../telefone';
 
 const usuario = await protegerPagina();
 
@@ -56,6 +57,17 @@ if (usuario) {
         });
         linha.querySelectorAll('[data-campo="nascimento"]').forEach((el) => {
             el.textContent = formatarData(paciente.dados_pessoais?.data_nascimento);
+        });
+        linha.querySelectorAll('[data-fichas]').forEach((link) => {
+            const quantidade = paciente.fichas_count ?? 0;
+            link.textContent = `${quantidade} ${quantidade === 1 ? 'ficha' : 'fichas'}`;
+            link.href = link.dataset.url.replace('__PACIENTE__', paciente.id_paciente);
+            link.setAttribute('aria-label', `${link.textContent} de ${nomeDe(paciente)}`);
+        });
+        linha.querySelectorAll('[data-criar-ficha]').forEach((link) => {
+            link.href = link.dataset.url.replace('__PACIENTE__', paciente.id_paciente);
+            link.setAttribute('aria-label', `Criar ficha para ${nomeDe(paciente)}`);
+            link.hidden = !paciente.ativo;
         });
         const status = linha.querySelector('[data-campo="status"]');
         status.textContent = paciente.ativo ? 'Ativo' : 'Inativo';
@@ -237,30 +249,52 @@ if (usuario) {
         }
     };
 
+    const campoConfirmacao = $('confirmacao-nome');
+    const botaoExcluir = $('botao-confirmar-exclusao');
+    const erroConfirmacao = $('erro-confirmacao-nome');
+    const podeExcluir = () => Boolean(confirmar.dataset.nomeCompleto) && campoConfirmacao.value.trim() === confirmar.dataset.nomeCompleto;
+    campoConfirmacao.addEventListener('input', () => {
+        if (botaoExcluir.getAttribute('aria-busy') !== 'true') botaoExcluir.disabled = !podeExcluir();
+        erroConfirmacao.hidden = true;
+        campoConfirmacao.removeAttribute('aria-invalid');
+    });
+
     const pedirExclusao = (paciente) => {
         $('nome-exclusao').textContent = nomeDe(paciente);
         confirmar.dataset.id = paciente.id_paciente;
         confirmar.dataset.nome = nomeDe(paciente);
+        confirmar.dataset.nomeCompleto = paciente.dados_pessoais?.nome?.trim() || '';
+        campoConfirmacao.value = '';
+        botaoExcluir.disabled = true;
+        campoConfirmacao.removeAttribute('aria-invalid');
+        erroConfirmacao.textContent = 'Cadastre o nome completo da paciente antes de excluí-la.';
+        erroConfirmacao.hidden = Boolean(confirmar.dataset.nomeCompleto);
         confirmar.showModal();
+        campoConfirmacao.focus();
     };
 
     $('botao-confirmar-exclusao').addEventListener('click', (evento) =>
         desabilitarEnquanto(evento.currentTarget, async () => {
+            if (!podeExcluir()) return;
             try {
-                await api(`/pacientes/${confirmar.dataset.id}/excluir`, { method: 'POST' });
+                await api(`/pacientes/${confirmar.dataset.id}/excluir`, { method: 'POST', body: { confirmacao_nome: campoConfirmacao.value.trim() } });
                 confirmar.close();
                 avisar(`${confirmar.dataset.nome} foi excluída.`);
                 await recarregar();
             } catch (erro) {
-                confirmar.close();
-                avisar(erro.message);
+                erroConfirmacao.textContent = erro instanceof ErroValidacao ? (erro.erros.confirmacao_nome?.[0] || erro.message) : erro.message;
+                erroConfirmacao.hidden = false;
+                campoConfirmacao.setAttribute('aria-invalid', 'true');
+                campoConfirmacao.focus();
             }
-        }),
+        }).finally(() => { botaoExcluir.disabled = !podeExcluir(); }),
     );
 
     // ---------- Janela de cadastro e edição ----------
 
     const campoCpf = $('campo-cpf');
+    const campoTelefone = $('campo-dados-pessoais-telefone');
+    campoTelefone.addEventListener('input', () => mascararTelefone(campoTelefone));
     campoCpf.addEventListener('input', () => {
         const d = campoCpf.value.replace(/\D/g, '').slice(0, 11);
         const partes = [d.slice(0, 3), d.slice(3, 6), d.slice(6, 9)].filter(Boolean).join('.');
@@ -300,6 +334,7 @@ if (usuario) {
                 }
                 campo.value = valor ?? '';
             }
+            campoTelefone.value = formatarTelefone(campoTelefone.value);
         }
 
         janela.showModal();

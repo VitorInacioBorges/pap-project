@@ -20,7 +20,7 @@ it('cria um paciente para um usuario secretario e nao retorna a senha', function
     $response = $this->postJson('/api/pacientes', [
         'email' => 'paciente@example.com',
         'senha' => 'senha-segura-123',
-        'cpf' => '12345678901',
+        'cpf' => '12345678909',
     ]);
 
     $response->assertCreated()
@@ -32,7 +32,7 @@ it('cria um paciente para um usuario secretario e nao retorna a senha', function
 
     $this->assertDatabaseHas('pacientes', [
         'email' => 'paciente@example.com',
-        'cpf' => '123.456.789-01',
+        'cpf' => '123.456.789-09',
         'codigo_paciente' => $codigoPaciente,
     ]);
 });

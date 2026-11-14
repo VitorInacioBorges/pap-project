@@ -2,6 +2,7 @@
 
 use App\Http\Controllers\AuthController;
 use App\Http\Controllers\DadosPessoaisController;
+use App\Http\Controllers\FichaController;
 use App\Http\Controllers\MeController;
 use App\Http\Controllers\PacienteController;
 use App\Http\Controllers\UserController;
@@ -27,6 +28,8 @@ Route::middleware('clear_sanctum')->group(function () {
         Route::delete('/users/{id}', [UserController::class, 'destroy'])->middleware('cargo:admin');
 
         Route::middleware('cargo:secretario,admin')->group(function () {
+            Route::get('/pacientes/{paciente}/fichas', [FichaController::class, 'index'])->withTrashed();
+            Route::post('/pacientes/{paciente}/fichas', [FichaController::class, 'store']);
             Route::apiResource('pacientes', PacienteController::class)
                 ->parameters(['pacientes' => 'paciente'])
                 ->withTrashed(['show', 'update']);

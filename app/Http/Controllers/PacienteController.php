@@ -43,7 +43,7 @@ class PacienteController extends Controller
         $validated = $request->validate([
             'email' => ['required', 'email', 'max:255', $this->unico('email')],
             'senha' => ['required', 'string', 'min:8', 'max:255'],
-            'cpf' => ['required', 'string', 'regex:'.OpcoesPaciente::FORMATO_CPF, $this->cpfLivre()],
+            'cpf' => ['bail', 'required', 'string', $this->validarCpf()],
             ...$this->regrasDadosPessoais($request, false),
         ]);
 
@@ -67,10 +67,10 @@ class PacienteController extends Controller
             'senha' => ['sometimes', 'required', 'string', 'min:8', 'max:255'],
             'cpf' => [
                 'sometimes',
+                'bail',
                 'required',
                 'string',
-                'regex:'.OpcoesPaciente::FORMATO_CPF,
-                $this->cpfLivre($paciente),
+                $this->validarCpf($paciente),
             ],
             ...$this->regrasDadosPessoais($request, $paciente->dadosPessoais()->exists()),
         ]);
@@ -92,8 +92,18 @@ class PacienteController extends Controller
         return response()->json($service->reativar($paciente));
     }
 
-    public function excluir(Paciente $paciente, PacienteService $service): Response
+    public function excluir(Request $request, Paciente $paciente, PacienteService $service): Response
     {
+        $nome = trim((string) $paciente->dadosPessoais?->nome);
+        $request->validate([
+            'confirmacao_nome' => ['required', 'string', Rule::in($nome === '' ? [] : [$nome])],
+        ], [
+            'confirmacao_nome.required' => 'Digite o nome completo da paciente para confirmar a exclusão.',
+            'confirmacao_nome.in' => $nome === ''
+                ? 'Cadastre o nome completo da paciente antes de excluí-la.'
+                : 'O nome informado não corresponde ao nome completo da paciente.',
+        ]);
+
         $service->excluirDefinitivo($paciente);
 
         return response()->noContent();
@@ -129,9 +139,15 @@ class PacienteController extends Controller
     /**
      * Compara só os dígitos, porque cadastros antigos podem ter o CPF sem máscara.
      */
-    private function cpfLivre(?Paciente $ignorar = null): Closure
+    private function validarCpf(?Paciente $ignorar = null): Closure
     {
         return function (string $atributo, mixed $valor, Closure $falhar) use ($ignorar) {
+            if (! OpcoesPaciente::cpfValido($valor)) {
+                $falhar('CPF inválido. Confira os números informados.');
+
+                return;
+            }
+
             $digitos = preg_replace('/\D/', '', (string) $valor);
 
             $emUso = Paciente::withTrashed()
