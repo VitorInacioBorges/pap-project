@@ -75,12 +75,6 @@
                     Entrar
                 </button>
 
-                <div class="text-center pt-2 text-sm text-gray-500 font-medium">
-                    Usuário novo(a) no nosso sistema? 
-                    <a href="{{ route('patients.create') }}" class="text-[#009A94] font-bold underline hover:brightness-90">
-                        Cadastre-se
-                    </a>
-                </div>
             </form>
         </div>
     </div>
