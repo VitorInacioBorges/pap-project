@@ -4,8 +4,10 @@ namespace App\Http\Controllers;
 
 use App\Models\Paciente;
 use App\Services\PacienteService;
+use App\Support\OpcoesPaciente;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
+use Illuminate\Support\Arr;
 use Illuminate\Validation\Rule;
 use Illuminate\Validation\Rules\Unique;
 use Symfony\Component\HttpFoundation\Response;
@@ -35,19 +37,24 @@ class PacienteController extends Controller
 
     public function store(Request $request, PacienteService $service): JsonResponse
     {
+        $this->normalizarCpf($request);
+
         $validated = $request->validate([
             'email' => ['required', 'email', 'max:255', $this->unico('email')],
             'senha' => ['required', 'string', 'min:8', 'max:255'],
-            'cpf' => ['required', 'string', 'max:14', $this->unico('cpf')],
+            'cpf' => ['required', 'string', 'regex:'.OpcoesPaciente::FORMATO_CPF, $this->unico('cpf')],
+            ...$this->regrasDadosPessoais($request, false),
         ]);
 
-        $paciente = $service->criar($validated);
+        $dadosPessoais = Arr::pull($validated, 'dados_pessoais');
 
-        return response()->json($paciente, 201);
+        return response()->json($service->criar($validated, $dadosPessoais), 201);
     }
 
     public function update(Request $request, Paciente $paciente, PacienteService $service): JsonResponse
     {
+        $this->normalizarCpf($request);
+
         $validated = $request->validate([
             'email' => [
                 'sometimes',
@@ -61,12 +68,15 @@ class PacienteController extends Controller
                 'sometimes',
                 'required',
                 'string',
-                'max:14',
+                'regex:'.OpcoesPaciente::FORMATO_CPF,
                 $this->unico('cpf')->ignore($paciente->getKey(), $paciente->getKeyName()),
             ],
+            ...$this->regrasDadosPessoais($request, $paciente->dadosPessoais()->exists()),
         ]);
 
-        return response()->json($service->atualizar($paciente, $validated));
+        $dadosPessoais = Arr::pull($validated, 'dados_pessoais');
+
+        return response()->json($service->atualizar($paciente, $validated, $dadosPessoais));
     }
 
     public function destroy(Paciente $paciente, PacienteService $service): Response
@@ -86,6 +96,33 @@ class PacienteController extends Controller
         $service->excluirDefinitivo($paciente);
 
         return response()->noContent();
+    }
+
+    private function normalizarCpf(Request $request): void
+    {
+        if (is_string($request->input('cpf'))) {
+            $request->merge(['cpf' => OpcoesPaciente::formatarCpf($request->input('cpf'))]);
+        }
+    }
+
+    /**
+     * Valida dados_pessoais só quando vierem, para manter o cadastro sem eles funcionando.
+     *
+     * @return array<string, array<int, mixed>>
+     */
+    private function regrasDadosPessoais(Request $request, bool $parcial): array
+    {
+        if (! $request->has('dados_pessoais')) {
+            return [];
+        }
+
+        $regras = ['dados_pessoais' => ['array']];
+
+        foreach (DadosPessoaisController::rules($parcial) as $campo => $regra) {
+            $regras["dados_pessoais.{$campo}"] = $regra;
+        }
+
+        return $regras;
     }
 
     private function unico(string $coluna): Unique

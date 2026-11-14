@@ -63,28 +63,42 @@ class PacienteService
 
     /**
      * @param  array{email: string, senha: string, cpf: string}  $dados
+     * @param  array<string, mixed>|null  $dadosPessoais
      */
-    public function criar(array $dados): Paciente
+    public function criar(array $dados, ?array $dadosPessoais = null): Paciente
     {
-        do {
-            $codigoPaciente = 'PA-'.fake()->regexify('[A-Za-z0-9]{8}');
-        } while (Paciente::query()->where('codigo_paciente', $codigoPaciente)->exists());
+        return DB::transaction(function () use ($dados, $dadosPessoais) {
+            do {
+                $codigoPaciente = 'PA-'.fake()->regexify('[A-Za-z0-9]{8}');
+            } while (Paciente::withTrashed()->where('codigo_paciente', $codigoPaciente)->exists());
 
-        $paciente = new Paciente($dados);
-        $paciente->codigo_paciente = $codigoPaciente;
-        $paciente->save();
+            $paciente = new Paciente($dados);
+            $paciente->codigo_paciente = $codigoPaciente;
+            $paciente->save();
 
-        return $paciente;
+            if ($dadosPessoais !== null) {
+                $paciente->dadosPessoais()->create($dadosPessoais);
+            }
+
+            return $paciente->load('dadosPessoais');
+        });
     }
 
     /**
      * @param  array<string, mixed>  $dados
+     * @param  array<string, mixed>|null  $dadosPessoais
      */
-    public function atualizar(Paciente $paciente, array $dados): Paciente
+    public function atualizar(Paciente $paciente, array $dados, ?array $dadosPessoais = null): Paciente
     {
-        $paciente->update($dados);
+        return DB::transaction(function () use ($paciente, $dados, $dadosPessoais) {
+            $paciente->update($dados);
 
-        return $paciente;
+            if ($dadosPessoais !== null) {
+                $paciente->dadosPessoais()->updateOrCreate([], $dadosPessoais);
+            }
+
+            return $paciente->load('dadosPessoais');
+        });
     }
 
     public function excluir(Paciente $paciente): void
